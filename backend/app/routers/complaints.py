@@ -140,7 +140,7 @@ def create_complaint(
 
     db.add(complaint)
     db.flush()
-   
+
     history = ComplaintHistory(
     complaint_id=complaint.id,
     changed_by_user_id=current_user.id,
@@ -186,7 +186,148 @@ def my_complaints(
 
 
 # ---------------------------------------------------------
-# GET SINGLE COMPLAINT
+# LIST COMPLAINT ALERTS  ← moved before /{complaint_id}
+# ---------------------------------------------------------
+
+@router.get(
+    "/alerts",
+    response_model=list[ComplaintAlertResponse],
+)
+def list_complaint_alerts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.WARDEN,
+        )
+    ),
+):
+
+    return db.scalars(
+        select(ComplaintAlert)
+        .where(
+            ComplaintAlert.is_acknowledged.is_(False)
+        )
+        .order_by(
+            ComplaintAlert.created_at.desc()
+        )
+    ).all()
+
+
+# ---------------------------------------------------------
+# ACKNOWLEDGE COMPLAINT ALERT  ← moved before /{complaint_id}
+# ---------------------------------------------------------
+
+@router.patch(
+    "/alerts/{alert_id}/acknowledge",
+    response_model=ComplaintAlertResponse,
+)
+def acknowledge_complaint_alert(
+    alert_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.WARDEN,
+        )
+    ),
+):
+
+    alert = db.get(
+        ComplaintAlert,
+        alert_id,
+    )
+
+    if not alert:
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Complaint alert not found",
+        )
+
+    if alert.is_acknowledged:
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Alert already acknowledged",
+        )
+
+    alert.is_acknowledged = True
+
+    alert.acknowledged_by = current_user.id
+
+    alert.acknowledged_at = (
+        datetime.now(timezone.utc)
+    )
+
+    db.commit()
+    db.refresh(alert)
+
+    return alert
+
+
+# ---------------------------------------------------------
+# REPEATED COMPLAINTS  ← moved before /{complaint_id}
+# ---------------------------------------------------------
+
+@router.get(
+    "/repeat",
+)
+def repeated_complaints(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.WARDEN,
+        )
+    ),
+):
+
+    since = (
+        datetime.now(timezone.utc)
+        - timedelta(
+            days=REPEAT_COMPLAINT_LOOKBACK_DAYS
+        )
+    )
+
+    rows = db.execute(
+        select(
+            Complaint.room_id,
+            Complaint.category,
+            func.count(Complaint.id).label(
+                "complaint_count"
+            ),
+        )
+        .where(
+            Complaint.created_at >= since,
+            Complaint.status
+            != ComplaintStatus.CANCELLED,
+        )
+        .group_by(
+            Complaint.room_id,
+            Complaint.category,
+        )
+        .having(
+            func.count(Complaint.id)
+            >= REPEAT_COMPLAINT_THRESHOLD
+        )
+        .order_by(
+            func.count(Complaint.id).desc()
+        )
+    ).all()
+
+    return [
+        {
+            "room_id": row.room_id,
+            "category": row.category.value,
+            "complaint_count": row.complaint_count,
+        }
+        for row in rows
+    ]
+
+
+# ---------------------------------------------------------
+# GET SINGLE COMPLAINT  ← dynamic route, now after all fixed paths
 # ---------------------------------------------------------
 
 @router.get(
@@ -721,6 +862,8 @@ def cancel_complaint(
     db.refresh(complaint)
 
     return complaint
+
+
 @router.post(
     "/{complaint_id}/attachments",
 )
@@ -793,6 +936,8 @@ async def upload_complaint_attachment(
         "file_name": attachment.file_name,
         "file_path": attachment.file_path,
     }
+
+
 @router.get(
     "/{complaint_id}/attachments/{attachment_id}",
 )
@@ -887,6 +1032,8 @@ def view_complaint_attachment(
         media_type=attachment.content_type,
         filename=attachment.file_name,
     )
+
+
 @router.get(
     "/{complaint_id}/history",
     response_model=list[ComplaintHistoryResponse],
@@ -959,126 +1106,3 @@ def complaint_history(
             ComplaintHistory.created_at.asc()
         )
     ).all()
-@router.get(
-    "/alerts",
-    response_model=list[ComplaintAlertResponse],
-)
-def list_complaint_alerts(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_roles(
-            UserRole.ADMIN,
-            UserRole.WARDEN,
-        )
-    ),
-):
-
-    return db.scalars(
-        select(ComplaintAlert)
-        .where(
-            ComplaintAlert.is_acknowledged.is_(False)
-        )
-        .order_by(
-            ComplaintAlert.created_at.desc()
-        )
-    ).all()
-@router.patch(
-    "/alerts/{alert_id}/acknowledge",
-    response_model=ComplaintAlertResponse,
-)
-def acknowledge_complaint_alert(
-    alert_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_roles(
-            UserRole.ADMIN,
-            UserRole.WARDEN,
-        )
-    ),
-):
-
-    alert = db.get(
-        ComplaintAlert,
-        alert_id,
-    )
-
-    if not alert:
-
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Complaint alert not found",
-        )
-
-    if alert.is_acknowledged:
-
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Alert already acknowledged",
-        )
-
-    alert.is_acknowledged = True
-
-    alert.acknowledged_by = current_user.id
-
-    alert.acknowledged_at = (
-        datetime.now(timezone.utc)
-    )
-
-    db.commit()
-    db.refresh(alert)
-
-    return alert
-@router.get(
-    "/repeat",
-)
-def repeated_complaints(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_roles(
-            UserRole.ADMIN,
-            UserRole.WARDEN,
-        )
-    ),
-):
-
-    since = (
-        datetime.now(timezone.utc)
-        - timedelta(
-            days=REPEAT_COMPLAINT_LOOKBACK_DAYS
-        )
-    )
-
-    rows = db.execute(
-        select(
-            Complaint.room_id,
-            Complaint.category,
-            func.count(Complaint.id).label(
-                "complaint_count"
-            ),
-        )
-        .where(
-            Complaint.created_at >= since,
-            Complaint.status
-            != ComplaintStatus.CANCELLED,
-        )
-        .group_by(
-            Complaint.room_id,
-            Complaint.category,
-        )
-        .having(
-            func.count(Complaint.id)
-            >= REPEAT_COMPLAINT_THRESHOLD
-        )
-        .order_by(
-            func.count(Complaint.id).desc()
-        )
-    ).all()
-
-    return [
-        {
-            "room_id": row.room_id,
-            "category": row.category.value,
-            "complaint_count": row.complaint_count,
-        }
-        for row in rows
-    ]
