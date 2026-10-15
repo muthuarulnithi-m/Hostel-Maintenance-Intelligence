@@ -2,12 +2,12 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+
 import AppLayout        from '../components/layout/AppLayout';
 import ProtectedRoute   from './ProtectedRoute';
 import LoginPage        from '../pages/auth/LoginPage';
 import RegisterPage     from '../pages/auth/RegisterPage';
 import StudentDashboard from '../pages/student/StudentDashboard';
-import StaffDashboard   from '../pages/staff/StaffDashboard';
 import WardenDashboard  from '../pages/warden/WardenDashboard';
 import AdminDashboard   from '../pages/admin/AdminDashboard';
 import MyComplaintsPage    from '../pages/student/MyComplaintsPage';
@@ -24,7 +24,16 @@ import ProfilePage               from '../components/common/ProfilePage';
 import AdminUsersPage            from '../pages/admin/AdminUsersPage';
 import AdminHostelPage           from '../pages/admin/AdminHostelPage';
 import WardenRepeatComplaintsPage from '../pages/warden/WardenRepeatComplaintsPage';
-
+import StudentHistoryPage   from '../pages/student/StudentHistoryPage';
+import AdminStaffPage       from '../pages/admin/AdminStaffPage';
+import AdminWardensPage     from '../pages/admin/AdminWardensPage';
+import AdminReportsPage     from '../pages/admin/AdminReportsPage';
+import AdminSettingsPage    from '../pages/admin/AdminSettingsPage';
+import StaffDashboard from "../pages/staff/StaffDashboard";
+import StaffComplaintsPage from "../pages/staff/StaffComplaintsPage";
+import StaffComplaintDetailPage from "../pages/staff/StaffComplaintDetailPage";
+import StaffHistoryPage from "../pages/staff/StaffHistoryPage";
+import StaffPerformancePage from "../pages/staff/StaffPerformancePage";
 function RootRedirect() {
   const { isAuthenticated, userRole } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -79,8 +88,8 @@ function AppRoutes() {
         <Route path="complaints/new" element={<NewComplaintPage />} />   
         <Route path="complaints/:id" element={<ComplaintDetailPage />} />
         <Route path="complaints/:id/verify" element={<VerificationPage />} />
-        <Route path="history"        element={<PlaceholderPage title="Complaint History" />} />
-        <Route path="notifications"  element={<PlaceholderPage title="Notifications" />} />
+        <Route path="history" element={<StudentHistoryPage />} />
+        <Route path="notifications"     element={<NotificationsPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
 
@@ -93,14 +102,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index                 element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard"      element={<StaffDashboard />} />
-        <Route path="complaints"     element={<PlaceholderPage title="Assigned Work" />} />
-        <Route path="complaints/:id" element={<PlaceholderPage title="Complaint Details" />} />
-        <Route path="history"        element={<PlaceholderPage title="Work History" />} />
-        <Route path="performance"    element={<PlaceholderPage title="My Performance" />} />
-        <Route path="notifications"  element={<NotificationsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
+        <Route index                  element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard"       element={<StaffDashboard />} />
+        <Route path="complaints"      element={<StaffComplaintsPage />} />
+        <Route path="complaints/:id"  element={<StaffComplaintDetailPage />}/>
+        <Route path="history"         element={<StaffHistoryPage />} />
+        <Route path="performance"     element={<StaffPerformancePage />} />
+        <Route path="notifications"   element={<NotificationsPage />} />
+        <Route path="profile"         element={<ProfilePage />} />
       </Route>
 
       {/* ── Warden ──────────────────────────────────────────────────── */}
@@ -134,11 +143,10 @@ function AppRoutes() {
       >
         <Route index                 element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard"      element={<AdminDashboard />} />
-        <Route path="users"          element={<PlaceholderPage title="User Management" />} />
-        <Route path="staff"          element={<PlaceholderPage title="Staff Management" />} />
-        <Route path="wardens"        element={<PlaceholderPage title="Warden Management" />} />
-        <Route path="reports"        element={<PlaceholderPage title="Reports" />} />
-        <Route path="settings"       element={<PlaceholderPage title="System Settings" />} />
+        <Route path="staff"    element={<AdminStaffPage />} />
+        <Route path="wardens"  element={<AdminWardensPage />} />
+        <Route path="reports"  element={<AdminReportsPage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="users"          element={<AdminUsersPage />} />
         <Route path="hostel"         element={<AdminHostelPage />} />
         <Route path="profile"        element={<ProfilePage />} />

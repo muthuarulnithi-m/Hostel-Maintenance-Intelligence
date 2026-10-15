@@ -45,11 +45,12 @@ function StaffComplaintsPage() {
   const [priorityFilter,setPriorityFilter]= useState('ALL');
   const [sortBy,        setSortBy]        = useState('priority'); // 'priority' | 'date'
 
+  // GET /complaints/assigned/me — returns only complaints assigned to this staff member
   const fetchComplaints = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await complaintApi.getMyComplaints();
+      const data = await complaintApi.getAssignedComplaints();
       setComplaints(data);
     } catch {
       setError('Unable to load your assigned complaints.');
@@ -92,23 +93,25 @@ function StaffComplaintsPage() {
       {/* ── Filter bar ────────────────────────────────────────────────────── */}
       <Card sx={{ mb: 2.5 }}>
         <CardContent sx={{ py: '14px !important' }}>
-          <Grid container spacing={2} alignItems="center" sx={{ mb: 1.5 }}>
-            <Grid item xs={12} sm={5}>
+          <Grid container spacing={1.5} sx={{ mb: 1.5, alignItems: 'center' }}>
+            <Grid xs={12} sm={5}>
               <TextField
                 fullWidth size="small"
                 placeholder="Search by title or ID…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid xs={6} sm={3}>
               <TextField
                 fullWidth select size="small" label="Priority"
                 value={priorityFilter}
@@ -120,7 +123,7 @@ function StaffComplaintsPage() {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={6} sm={2}>
+            <Grid xs={6} sm={2}>
               <TextField
                 fullWidth select size="small" label="Sort By"
                 value={sortBy}
@@ -130,7 +133,7 @@ function StaffComplaintsPage() {
                 <MenuItem value="date">Date</MenuItem>
               </TextField>
             </Grid>
-            <Grid item xs={6} sm={2}>
+            <Grid xs={6} sm={2}>
               <Button
                 fullWidth variant="outlined" size="small"
                 onClick={() => { setSearch(''); setStatusFilter('ALL'); setPriorityFilter('ALL'); }}

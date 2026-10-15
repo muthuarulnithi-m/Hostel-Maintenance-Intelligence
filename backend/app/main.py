@@ -14,6 +14,8 @@ from app.routers.rooms         import router as rooms_router
 from app.routers.assignments   import router as assignments_router
 from app.routers.staff         import router as staff_router
 from app.routers.notifications import router as notifications_router
+from app.routers.dashboard import router as dashboard_router
+from app.routers.ratings import router as ratings_router
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -51,7 +53,9 @@ app.include_router(rooms_router)
 app.include_router(assignments_router)
 app.include_router(staff_router)
 app.include_router(complaints_router)
+app.include_router(ratings_router)
 app.include_router(notifications_router)
+app.include_router(dashboard_router)
 
 @app.get(
     "/",

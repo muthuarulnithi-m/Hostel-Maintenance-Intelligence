@@ -15,7 +15,6 @@ import {
   BuildOutlined,
   PeopleOutlined,
   BarChartOutlined,
-  ManageAccountsOutlined,
   HomeWorkOutlined,
   SettingsOutlined,
   LogoutOutlined,
@@ -24,6 +23,7 @@ import {
   ExpandMore,
   AssignmentOutlined,
   SupervisorAccountOutlined,
+  RepeatOutlined,        // ← added for Repeat Issues
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,40 +31,44 @@ import { useAuth } from '../../context/AuthContext';
 export const SIDEBAR_WIDTH = 260;
 
 // ─── Navigation config per role ──────────────────────────────────────────────
-// Each item: { label, icon, path, children (optional) }
 const NAV_CONFIG = {
   student: [
-    { label: 'Dashboard',      icon: <DashboardOutlined />,             path: '/student/dashboard' },
-    { label: 'My Complaints',  icon: <ReportProblemOutlined />,         path: '/student/complaints' },
-    { label: 'New Complaint',  icon: <AddCircleOutlineOutlined />,      path: '/student/complaints/new' },
-    { label: 'History',        icon: <HistoryOutlined />,               path: '/student/history' },
-    { label: 'Notifications',  icon: <NotificationsOutlined />,         path: '/student/notifications' },
-    { label: 'Profile',        icon: <PersonOutlined />,                path: '/student/profile' },
+    { label: 'Dashboard',     icon: <DashboardOutlined />,          path: '/student/dashboard' },
+    { label: 'My Complaints', icon: <ReportProblemOutlined />,      path: '/student/complaints' },
+    { label: 'New Complaint', icon: <AddCircleOutlineOutlined />,   path: '/student/complaints/new' },
+    { label: 'History',       icon: <HistoryOutlined />,            path: '/student/history' },
+    { label: 'Notifications', icon: <NotificationsOutlined />,      path: '/student/notifications' },
+    { label: 'Profile',       icon: <PersonOutlined />,             path: '/student/profile' },
   ],
+
   staff: [
-    { label: 'Dashboard',         icon: <DashboardOutlined />,          path: '/staff/dashboard' },
-    { label: 'Assigned Work',     icon: <AssignmentOutlined />,         path: '/staff/complaints' },
-    { label: 'History',           icon: <HistoryOutlined />,            path: '/staff/history' },
-    { label: 'Notifications',     icon: <NotificationsOutlined />,      path: '/staff/notifications' },
-    { label: 'My Performance',    icon: <BarChartOutlined />,           path: '/staff/performance' },
-    { label: 'Profile',           icon: <PersonOutlined />,             path: '/staff/profile' },
+    { label: 'Dashboard',      icon: <DashboardOutlined />,         path: '/staff/dashboard' },
+    { label: 'Assigned Work',  icon: <AssignmentOutlined />,        path: '/staff/complaints' },
+    { label: 'History',        icon: <HistoryOutlined />,           path: '/staff/history' },
+    { label: 'Notifications',  icon: <NotificationsOutlined />,     path: '/staff/notifications' },
+    { label: 'My Performance', icon: <BarChartOutlined />,          path: '/staff/performance' },
+    { label: 'Profile',        icon: <PersonOutlined />,            path: '/staff/profile' },
   ],
+
   warden: [
-    { label: 'Dashboard',         icon: <DashboardOutlined />,          path: '/warden/dashboard' },
-    { label: 'Complaints',        icon: <ReportProblemOutlined />,      path: '/warden/complaints' },
-    { label: 'Staff',             icon: <PeopleOutlined />,             path: '/warden/staff' },
-    { label: 'Reports',           icon: <BarChartOutlined />,           path: '/warden/reports' },
-    { label: 'Notifications',     icon: <NotificationsOutlined />,      path: '/warden/notifications' },
-    { label: 'Profile',           icon: <PersonOutlined />,             path: '/warden/profile' },
+    { label: 'Dashboard',      icon: <DashboardOutlined />,         path: '/warden/dashboard' },
+    { label: 'Complaints',     icon: <ReportProblemOutlined />,     path: '/warden/complaints' },
+    { label: 'Repeat Issues',  icon: <RepeatOutlined />,            path: '/warden/repeat-complaints' }, // ← added
+    { label: 'Staff',          icon: <PeopleOutlined />,            path: '/warden/staff' },
+    { label: 'Reports',        icon: <BarChartOutlined />,          path: '/warden/reports' },
+    { label: 'Notifications',  icon: <NotificationsOutlined />,     path: '/warden/notifications' },
+    { label: 'Profile',        icon: <PersonOutlined />,            path: '/warden/profile' },
   ],
+
   admin: [
-    { label: 'Dashboard',         icon: <DashboardOutlined />,          path: '/admin/dashboard' },
-    { label: 'Users',             icon: <PeopleOutlined />,             path: '/admin/users' },
-    { label: 'Hostel',            icon: <HomeWorkOutlined />,           path: '/admin/hostel' },
-    { label: 'Staff',             icon: <BuildOutlined />,              path: '/admin/staff' },
-    { label: 'Wardens',           icon: <SupervisorAccountOutlined />,  path: '/admin/wardens' },
-    { label: 'Reports',           icon: <BarChartOutlined />,           path: '/admin/reports' },
-    { label: 'Settings',          icon: <SettingsOutlined />,           path: '/admin/settings' },
+    { label: 'Dashboard',  icon: <DashboardOutlined />,             path: '/admin/dashboard' },
+    { label: 'Users',      icon: <PeopleOutlined />,                path: '/admin/users' },
+    { label: 'Hostel',     icon: <HomeWorkOutlined />,              path: '/admin/hostel' },
+    { label: 'Staff',      icon: <BuildOutlined />,                 path: '/admin/staff' },
+    { label: 'Wardens',    icon: <SupervisorAccountOutlined />,     path: '/admin/wardens' },
+    { label: 'Reports',    icon: <BarChartOutlined />,              path: '/admin/reports' },
+    { label: 'Settings',   icon: <SettingsOutlined />,              path: '/admin/settings' },
+    { label: 'Profile',    icon: <PersonOutlined />,                path: '/admin/profile' }, // ← added
   ],
 };
 
@@ -78,12 +82,12 @@ const ROLE_META = {
 
 // ─── A single navigation item ─────────────────────────────────────────────────
 function NavItem({ item, depth = 0 }) {
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const navigate       = useNavigate();
+  const { pathname }   = useLocation();
   const [open, setOpen] = useState(false);
 
-  const hasChildren = item.children && item.children.length > 0;
-  const isActive    = !hasChildren && pathname === item.path;
+  const hasChildren    = item.children && item.children.length > 0;
+  const isActive       = !hasChildren && pathname === item.path;
   const isParentActive = hasChildren && item.children.some(c => pathname === c.path);
 
   const handleClick = () => {
@@ -105,13 +109,11 @@ function NavItem({ item, depth = 0 }) {
           mb: '2px',
           py: '8px',
           px: '12px',
-          // Active state
           backgroundColor: isActive
             ? 'rgba(99,102,241,0.18)'
             : isParentActive
             ? 'rgba(99,102,241,0.08)'
             : 'transparent',
-          // Text and icon color
           color: isActive ? '#a5b4fc' : 'rgba(255,255,255,0.65)',
           '&:hover': {
             backgroundColor: isActive
@@ -119,7 +121,6 @@ function NavItem({ item, depth = 0 }) {
               : 'rgba(255,255,255,0.06)',
             color: '#ffffff',
           },
-          // Active left border accent
           '&::before': isActive ? {
             content: '""',
             position: 'absolute',
@@ -146,10 +147,12 @@ function NavItem({ item, depth = 0 }) {
         </ListItemIcon>
         <ListItemText
           primary={item.label}
-          primaryTypographyProps={{
-            fontSize: '0.875rem',
-            fontWeight: isActive ? 600 : 400,
-            letterSpacing: '0.01em',
+          slotProps={{
+            primary: {
+              fontSize: '0.875rem',
+              fontWeight: isActive ? 600 : 400,
+              letterSpacing: '0.01em',
+            },
           }}
         />
         {hasChildren && (
@@ -173,37 +176,36 @@ function NavItem({ item, depth = 0 }) {
   );
 }
 
-// ─── Sidebar content (shared between permanent and temporary drawers) ─────────
+// ─── Sidebar content ──────────────────────────────────────────────────────────
 function SidebarContent({ onClose }) {
   const { user, userRole, logout } = useAuth();
   const navigate = useNavigate();
 
-  const navItems  = NAV_CONFIG[userRole] || [];
-  const roleMeta  = ROLE_META[userRole]  || { label: 'User', color: '#94a3b8' };
+  const navItems = NAV_CONFIG[userRole] || [];
+  const roleMeta = ROLE_META[userRole]  || { label: 'User', color: '#94a3b8' };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  // User initials for avatar
   const initials = user?.name
-  ? user.name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-  : '?';
+    ? user.name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+
   return (
     <Box
       sx={{
         display:       'flex',
         flexDirection: 'column',
         height:        '100%',
-        bgcolor:       '#0F172A', // BRAND.navy
+        bgcolor:       '#0F172A',
       }}
     >
-      {/* ── Logo / Brand ───────────────────────────────────────────────── */}
+      {/* ── Logo / Brand ─────────────────────────────────────────────── */}
       <Box
         sx={{
-          px: 2.5,
-          py: 2.5,
+          px: 2.5, py: 2.5,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -220,23 +222,16 @@ function SidebarContent({ onClose }) {
             <HomeWorkOutlined sx={{ color: '#fff', fontSize: 20 }} />
           </Box>
           <Box>
-            <Typography
-              sx={{
-                color: '#ffffff', fontWeight: 700,
-                fontSize: '0.875rem', lineHeight: 1.2,
-              }}
-            >
+            <Typography sx={{ color: '#ffffff', fontWeight: 700, fontSize: '0.875rem', lineHeight: 1.2 }}>
               HMIS
             </Typography>
-            <Typography
-              sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.6875rem' }}
-            >
+            <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.6875rem' }}>
               Maintenance System
             </Typography>
           </Box>
         </Box>
 
-        {/* Close button — visible only on mobile */}
+        {/* Mobile close button */}
         {onClose && (
           <IconButton
             onClick={onClose}
@@ -250,11 +245,10 @@ function SidebarContent({ onClose }) {
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mx: 2 }} />
 
-      {/* ── User info card ──────────────────────────────────────────────── */}
+      {/* ── User info card ───────────────────────────────────────────── */}
       <Box
         sx={{
-          mx: 2, my: 1.5,
-          p: 1.5,
+          mx: 2, my: 1.5, p: 1.5,
           borderRadius: 2,
           bgcolor: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,255,255,0.06)',
@@ -280,12 +274,7 @@ function SidebarContent({ onClose }) {
             {user?.name || user?.email || 'Guest'}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-            <Box
-              sx={{
-                width: 6, height: 6, borderRadius: '50%',
-                bgcolor: roleMeta.color,
-              }}
-            />
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: roleMeta.color }} />
             <Typography sx={{ color: roleMeta.color, fontSize: '0.6875rem', fontWeight: 500 }}>
               {roleMeta.label}
             </Typography>
@@ -295,9 +284,8 @@ function SidebarContent({ onClose }) {
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mx: 2, mb: 1 }} />
 
-      {/* ── Navigation items ────────────────────────────────────────────── */}
+      {/* ── Navigation items ─────────────────────────────────────────── */}
       <Box sx={{ flex: 1, overflowY: 'auto', pb: 2, px: 1 }}>
-        {/* Section label */}
         <Typography
           sx={{
             color: 'rgba(255,255,255,0.25)',
@@ -305,9 +293,7 @@ function SidebarContent({ onClose }) {
             fontWeight: 600,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            px: 1.5,
-            mb: 0.5,
-            mt: 1,
+            px: 1.5, mb: 0.5, mt: 1,
           }}
         >
           Navigation
@@ -321,7 +307,7 @@ function SidebarContent({ onClose }) {
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mx: 2 }} />
 
-      {/* ── Logout button ───────────────────────────────────────────────── */}
+      {/* ── Logout button ────────────────────────────────────────────── */}
       <Box sx={{ p: 1.5 }}>
         <ListItemButton
           onClick={handleLogout}
@@ -340,7 +326,7 @@ function SidebarContent({ onClose }) {
           </ListItemIcon>
           <ListItemText
             primary="Logout"
-            primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+            slotProps={{ primary: { fontSize: '0.875rem', fontWeight: 500 } }}
           />
         </ListItemButton>
       </Box>
@@ -349,11 +335,10 @@ function SidebarContent({ onClose }) {
 }
 
 // ─── Main Sidebar component ───────────────────────────────────────────────────
-// On desktop: permanent drawer. On mobile: temporary drawer (toggled by Header).
 function Sidebar({ mobileOpen, onMobileClose }) {
   return (
     <>
-      {/* ── Desktop: permanent sidebar ─────────────────────────────────── */}
+      {/* Desktop — permanent */}
       <Drawer
         variant="permanent"
         sx={{
@@ -371,12 +356,12 @@ function Sidebar({ mobileOpen, onMobileClose }) {
         <SidebarContent />
       </Drawer>
 
-      {/* ── Mobile: temporary overlay drawer ───────────────────────────── */}
+      {/* Mobile — temporary overlay */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onClose={onMobileClose}
-        ModalProps={{ keepMounted: true }} // Better mobile performance
+        ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: 'block', md: 'none' },
           '& .MuiDrawer-paper': {

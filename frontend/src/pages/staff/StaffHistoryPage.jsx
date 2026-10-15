@@ -28,7 +28,8 @@ function StaffHistoryPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await complaintApi.getMyComplaints();
+      // GET /complaints/assigned/me — returns only complaints assigned to this staff member
+      const data = await complaintApi.getAssignedComplaints();
       // Show only completed work — RESOLVED and CLOSED
       const done = data.filter(c => ['RESOLVED', 'CLOSED'].includes(c.status));
       setComplaints(done.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)));
@@ -59,12 +60,14 @@ function StaffHistoryPage() {
             size="small" placeholder="Search history…" value={search}
             onChange={e => setSearch(e.target.value)}
             sx={{ minWidth: 260 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
           <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 1 }}>

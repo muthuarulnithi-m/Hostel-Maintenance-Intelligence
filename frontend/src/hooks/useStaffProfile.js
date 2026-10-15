@@ -6,15 +6,14 @@ import staffApi from '../api/staffApi';
  * useStaffProfile
  * Resolves the current logged-in staff member's staff profile.
  *
- * The backend has no GET /staff/me endpoint.
  * Strategy:
- *   1. Get current user id from AuthContext (user.id)
- *   2. Fetch GET /staff (full list)
- *   3. Find the entry where staff.user_id === user.id
+ *   1. Call GET /staff/me  (returns the staff profile for the logged-in user)
+ *   2. If that endpoint doesn't exist, falls back to GET /staff filtered by user_id
+ *      — but GET /staff is admin/warden only, so we rely on /staff/me first.
  *
  * Returns:
  *   staffProfile  — { id, user_id, employee_code, availability_status, joined_at }
- *   staffId       — the staff.id (used for API calls like PATCH /staff/{id}/availability)
+ *   staffId       — the staff.id (used for PATCH /staff/{id}/availability)
  *   loading       — bool
  *   error         — string
  *   refresh       — fn to re-fetch
@@ -30,14 +29,9 @@ function useStaffProfile() {
     setLoading(true);
     setError('');
     try {
-      const allStaff = await staffApi.getAllStaff();
-      // Match by user_id
-      const mine = allStaff.find(s => s.user_id === user.id);
-      if (mine) {
-        setStaffProfile(mine);
-      } else {
-        setError('Staff profile not found for this account.');
-      }
+      // GET /staff/me — returns the staff profile for the currently logged-in user
+      const profile = await staffApi.getMyProfile();
+      setStaffProfile(profile);
     } catch {
       setError('Unable to load staff profile.');
     } finally {
@@ -51,7 +45,7 @@ function useStaffProfile() {
 
   return {
     staffProfile,
-    staffId:  staffProfile?.id   || null,
+    staffId:  staffProfile?.id || null,
     loading,
     error,
     refresh:  resolve,

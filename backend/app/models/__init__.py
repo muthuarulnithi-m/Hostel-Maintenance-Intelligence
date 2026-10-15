@@ -18,6 +18,14 @@ __all__ = [
     "AvailabilityStatus",
     "StaffSkill",
     "StaffSkillType",
+    "Complaint",
+    "ComplaintStatus",
+    "ComplaintPriority",
+    "ComplaintCategory",
+    "ComplaintAttachment",
+    "ComplaintHistory",
+    "ComplaintAlert",
+    "Rating",
 ]
 from app.models.complaint import (
     Complaint,
@@ -36,3 +44,4 @@ from app.models.complaint_history import (
 from app.models.complaint_alert import (
     ComplaintAlert,
 )
+from app.models.rating import Rating

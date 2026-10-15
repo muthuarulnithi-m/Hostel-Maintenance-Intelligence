@@ -35,7 +35,7 @@ function StaffPerformancePage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await complaintApi.getMyComplaints();
+      const data = await complaintApi.getAssignedComplaints();
       setComplaints(data);
     } catch {
       setError('Unable to load performance data.');
@@ -114,16 +114,16 @@ function StaffPerformancePage() {
 
       {/* ── KPI cards ─────────────────────────────────────────────────────── */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard title="Total Assigned" value={total}      icon={<AssignmentOutlined />}    color="#4F46E5" />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard title="Resolved"       value={resolved}   icon={<CheckCircleOutlined />}   color="#10B981" />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard title="In Progress"    value={inProgress} icon={<BuildOutlined />}          color="#0EA5E9" />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard title="On Hold"        value={onHold}     icon={<PauseCircleOutlined />}    color="#F59E0B" />
         </Grid>
       </Grid>
@@ -131,7 +131,7 @@ function StaffPerformancePage() {
       <Grid container spacing={2.5}>
 
         {/* ── Completion rates ──────────────────────────────────────────── */}
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
@@ -184,7 +184,7 @@ function StaffPerformancePage() {
         </Grid>
 
         {/* ── Category breakdown ────────────────────────────────────────── */}
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2.5 }}>
@@ -242,7 +242,7 @@ function StaffPerformancePage() {
         </Grid>
 
         {/* ── Status breakdown ──────────────────────────────────────────── */}
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
@@ -256,7 +256,7 @@ function StaffPerformancePage() {
                   { label: 'Resolved (pending verify)', value: resolved - closed, color: '#10B981', bg: '#F0FDF4' },
                   { label: 'Closed (verified)',      value: closed,      color: '#065F46', bg: '#DCFCE7' },
                 ].map(item => (
-                  <Grid item xs={6} sm={4} md={2.4} key={item.label}>
+                  <Grid xs={6} sm={4} md={2.4} key={item.label}>
                     <Box
                       sx={{
                         textAlign: 'center', p: 2, borderRadius: 2,

@@ -83,24 +83,26 @@ function WardenComplaintsPage() {
       {/* ── Filter bar ────────────────────────────────────────────────────── */}
       <Card sx={{ mb: 2.5 }}>
         <CardContent sx={{ py: '16px !important' }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
+          <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+            <Grid xs={12} sm={4}>
               <TextField
                 fullWidth
                 size="small"
                 placeholder="Search complaints…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
             </Grid>
-            <Grid item xs={6} sm={2.5}>
+            <Grid xs={6} sm={2.5}>
               <TextField
                 fullWidth select size="small"
                 label="Status"
@@ -113,7 +115,7 @@ function WardenComplaintsPage() {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={6} sm={2.5}>
+            <Grid xs={6} sm={2.5}>
               <TextField
                 fullWidth select size="small"
                 label="Priority"
@@ -126,7 +128,7 @@ function WardenComplaintsPage() {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={6} sm={2.5}>
+            <Grid xs={6} sm={2.5}>
               <TextField
                 fullWidth select size="small"
                 label="Category"
@@ -139,7 +141,7 @@ function WardenComplaintsPage() {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={6} sm={0.5}>
+            <Grid xs={6} sm={0.5}>
               <Button
                 fullWidth
                 variant="outlined"

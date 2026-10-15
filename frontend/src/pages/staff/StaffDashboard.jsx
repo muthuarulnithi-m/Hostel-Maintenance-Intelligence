@@ -53,12 +53,13 @@ function StaffDashboard() {
   const showSnack = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
-  // ── Fetch assigned complaints via GET /complaints/my ─────────────────────
+  // ── Fetch complaints assigned to this staff member ────────────────────────
+  // GET /complaints (list all) — allowed for STAFF role; backend filters by assignment
   const fetchComplaints = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await complaintApi.getMyComplaints();
+      const data = await complaintApi.getAllComplaints();
       setComplaints(data);
     } catch {
       setError('Unable to load your assigned complaints.');
@@ -177,7 +178,7 @@ function StaffDashboard() {
 
       {/* ── KPI cards ─────────────────────────────────────────────────────── */}
       <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Assigned"
             value={loading ? null : assigned}
@@ -187,7 +188,7 @@ function StaffDashboard() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="In Progress"
             value={loading ? null : inProgress}
@@ -197,7 +198,7 @@ function StaffDashboard() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="On Hold"
             value={loading ? null : onHold}
@@ -207,7 +208,7 @@ function StaffDashboard() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Completed"
             value={loading ? null : completed}

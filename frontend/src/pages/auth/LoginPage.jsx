@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, TextField,
   Button, InputAdornment, IconButton, Alert,
-  Divider, CircularProgress,
+  CircularProgress, Divider,
 } from '@mui/material';
 import {
   HomeWorkOutlined,
@@ -11,10 +11,10 @@ import {
   LockOutlined,
   VisibilityOutlined,
   VisibilityOffOutlined,
+  ArrowForwardOutlined,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
-// ─── Role → home route map ────────────────────────────────────────────────────
 const ROLE_HOME = {
   student: '/student/dashboard',
   staff:   '/staff/dashboard',
@@ -22,35 +22,38 @@ const ROLE_HOME = {
   admin:   '/admin/dashboard',
 };
 
+// ── Role hint pills shown below the form ─────────────────────────────────────
+const ROLE_PILLS = [
+  { label: 'Student',  color: '#818cf8', bg: 'rgba(129,140,248,0.12)' },
+  { label: 'Staff',    color: '#34d399', bg: 'rgba(52,211,153,0.12)'  },
+  { label: 'Warden',   color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
+  { label: 'Admin',    color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
+];
+
 function LoginPage() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { login, isAuthenticated, userRole } = useAuth();
 
-  // ── Redirect if already logged in ───────────────────────────────────────
+  // Redirect if already logged in
   React.useEffect(() => {
     if (isAuthenticated && userRole) {
       navigate(ROLE_HOME[userRole] || '/', { replace: true });
     }
   }, [isAuthenticated, userRole, navigate]);
 
-  // ── Form state ───────────────────────────────────────────────────────────
-  const [email,       setEmail]       = useState('');
-  const [password,    setPassword]    = useState('');
-  const [showPass,    setShowPass]    = useState(false);
-  const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState('');
+  const [email,      setEmail]      = useState('');
+  const [password,   setPassword]   = useState('');
+  const [showPass,   setShowPass]   = useState(false);
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passError,  setPassError]  = useState('');
 
-  // ── Field-level validation errors ────────────────────────────────────────
-  const [emailError,  setEmailError]  = useState('');
-  const [passError,   setPassError]   = useState('');
-
-  // ── Validate form before submit ──────────────────────────────────────────
   const validate = () => {
     let valid = true;
     setEmailError('');
     setPassError('');
-
     if (!email.trim()) {
       setEmailError('Email is required.');
       valid = false;
@@ -58,42 +61,27 @@ function LoginPage() {
       setEmailError('Enter a valid email address.');
       valid = false;
     }
-
     if (!password) {
       setPassError('Password is required.');
       valid = false;
-    } else if (password.length < 8) {
-      setPassError('Password must be at least 8 characters.');
-      valid = false;
     }
-
     return valid;
   };
 
-  // ── Submit handler ───────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     if (!validate()) return;
 
     setLoading(true);
     try {
       const userData = await login(email.trim(), password);
-
-      // Redirect to the page they were trying to access, or role home
       const role     = userData.role.toLowerCase();
       const intended = location.state?.from?.pathname;
       const home     = ROLE_HOME[role] || '/';
-
-      // Only use intended path if it belongs to this role
-      const destination =
-        intended && intended.startsWith(`/${role}`) ? intended : home;
-
-      navigate(destination, { replace: true });
-
+      const dest     = intended && intended.startsWith(`/${role}`) ? intended : home;
+      navigate(dest, { replace: true });
     } catch (err) {
-      // Handle specific backend errors gracefully
       if (err.response) {
         const status = err.response.status;
         if (status === 401) {
@@ -118,76 +106,93 @@ function LoginPage() {
   return (
     <Box
       sx={{
-        minHeight:      '100vh',
-        display:        'flex',
-        alignItems:     'center',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
-        bgcolor:        '#0F172A',
+        bgcolor: '#0F172A',
         backgroundImage: `
-          radial-gradient(ellipse at 20% 50%, rgba(79,70,229,0.15) 0%, transparent 60%),
-          radial-gradient(ellipse at 80% 20%, rgba(124,58,237,0.1)  0%, transparent 60%)
+          radial-gradient(ellipse at 20% 50%, rgba(79,70,229,0.18) 0%, transparent 55%),
+          radial-gradient(ellipse at 80% 20%, rgba(124,58,237,0.13) 0%, transparent 55%),
+          radial-gradient(ellipse at 60% 80%, rgba(16,185,129,0.06) 0%, transparent 50%)
         `,
         p: 2,
       }}
     >
-      <Box sx={{ width: '100%', maxWidth: 440 }}>
+      <Box sx={{ width: '100%', maxWidth: 420 }}>
 
-        {/* ── Brand header above card ──────────────────────────────────── */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-          <Box
-            sx={{
-              width: 52, height: 52, borderRadius: 2.5,
-              background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              mb: 1.5,
-              boxShadow: '0 8px 24px rgba(79,70,229,0.4)',
-            }}
-          >
-            <HomeWorkOutlined sx={{ color: '#fff', fontSize: 28 }} />
+        {/* ── Brand ───────────────────────────────────────────────────────── */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3.5 }}>
+          {/* Logo with glow ring */}
+          <Box sx={{ position: 'relative', mb: 2 }}>
+            <Box
+              sx={{
+                position: 'absolute', inset: -6,
+                borderRadius: 3.5,
+                background: 'linear-gradient(135deg, rgba(79,70,229,0.4), rgba(124,58,237,0.3))',
+                filter: 'blur(10px)',
+              }}
+            />
+            <Box
+              sx={{
+                position: 'relative',
+                width: 56, height: 56, borderRadius: 3,
+                background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 8px 32px rgba(79,70,229,0.45)',
+              }}
+            >
+              <HomeWorkOutlined sx={{ color: '#fff', fontSize: 28 }} />
+            </Box>
           </Box>
-          <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1.25rem' }}>
+
+          <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-0.01em' }}>
             HMIS
           </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8125rem', mt: 0.25 }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8125rem', mt: 0.25 }}>
             Hostel Maintenance Intelligence System
           </Typography>
         </Box>
 
-        {/* ── Login card ───────────────────────────────────────────────── */}
+        {/* ── Login card ──────────────────────────────────────────────────── */}
         <Card
           sx={{
             borderRadius: 3,
-            boxShadow: '0 25px 50px rgba(0,0,0,0.35)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'rgba(255,255,255,0.97)',
+            boxShadow: '0 32px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
+            overflow: 'visible',
           }}
         >
-          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, color: 'text.primary' }}>
-              Welcome back
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-              Sign in to your account to continue
-            </Typography>
+          <CardContent sx={{ p: { xs: 3, sm: 3.5 } }}>
 
-            {/* ── Error alert ─────────────────────────────────────────── */}
+            {/* Header */}
+            <Box sx={{ mb: 2.5 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.4, color: '#0F172A' }}>
+                Welcome back
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#64748B' }}>
+                Sign in to manage hostel maintenance
+              </Typography>
+            </Box>
+
+            {/* Error */}
             {error && (
               <Alert
                 severity="error"
                 onClose={() => setError('')}
-                sx={{ mb: 2.5, borderRadius: 2 }}
+                sx={{ mb: 2.5, borderRadius: 1.5, fontSize: '0.8125rem' }}
               >
                 {error}
               </Alert>
             )}
 
-            {/* ── Login form ──────────────────────────────────────────── */}
             <Box component="form" onSubmit={handleSubmit} noValidate>
 
               {/* Email */}
               <Box sx={{ mb: 2 }}>
                 <Typography
                   variant="caption"
-                  sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, display: 'block' }}
+                  sx={{ fontWeight: 600, color: '#374151', mb: 0.75, display: 'block', fontSize: '0.8125rem' }}
                 >
                   Email Address
                 </Typography>
@@ -202,24 +207,37 @@ function LoginPage() {
                   disabled={loading}
                   autoComplete="email"
                   autoFocus
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
-                      </InputAdornment>
-                    ),
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1.5,
+                      bgcolor: '#F8FAFC',
+                      '&:hover fieldset': { borderColor: '#818cf8' },
+                      '&.Mui-focused fieldset': { borderColor: '#4F46E5', borderWidth: 2 },
+                    },
+                  }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailOutlined sx={{ fontSize: 17, color: '#94A3B8' }} />
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
               </Box>
 
               {/* Password */}
-              <Box sx={{ mb: 3 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, display: 'block' }}
-                >
-                  Password
-                </Typography>
+              <Box sx={{ mb: 2.5 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: '#374151', fontSize: '0.8125rem' }}
+                  >
+                    Password
+                  </Typography>
+                </Box>
                 <TextField
                   fullWidth
                   type={showPass ? 'text' : 'password'}
@@ -230,74 +248,117 @@ function LoginPage() {
                   helperText={passError}
                   disabled={loading}
                   autoComplete="current-password"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPass(p => !p)}
-                          edge="end"
-                          size="small"
-                          tabIndex={-1}
-                          aria-label={showPass ? 'Hide password' : 'Show password'}
-                        >
-                          {showPass
-                            ? <VisibilityOffOutlined sx={{ fontSize: 18 }} />
-                            : <VisibilityOutlined   sx={{ fontSize: 18 }} />
-                          }
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1.5,
+                      bgcolor: '#F8FAFC',
+                      '&:hover fieldset': { borderColor: '#818cf8' },
+                      '&.Mui-focused fieldset': { borderColor: '#4F46E5', borderWidth: 2 },
+                    },
+                  }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockOutlined sx={{ fontSize: 17, color: '#94A3B8' }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPass(p => !p)}
+                            edge="end"
+                            size="small"
+                            tabIndex={-1}
+                            aria-label={showPass ? 'Hide password' : 'Show password'}
+                            sx={{ color: '#94A3B8', '&:hover': { color: '#4F46E5' } }}
+                          >
+                            {showPass
+                              ? <VisibilityOffOutlined sx={{ fontSize: 17 }} />
+                              : <VisibilityOutlined   sx={{ fontSize: 17 }} />
+                            }
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
               </Box>
 
-              {/* Submit button */}
+              {/* Submit */}
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
                 size="large"
                 disabled={loading}
-                sx={{ py: 1.5, fontSize: '0.9375rem', borderRadius: 2, mb: 2.5 }}
+                endIcon={!loading && <ArrowForwardOutlined sx={{ fontSize: 18 }} />}
+                sx={{
+                  py: 1.375,
+                  fontSize: '0.9375rem',
+                  fontWeight: 600,
+                  borderRadius: 1.75,
+                  background: 'linear-gradient(135deg, #4F46E5, #6D28D9)',
+                  boxShadow: '0 4px 14px rgba(79,70,229,0.4)',
+                  letterSpacing: '0.01em',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #4338CA, #5B21B6)',
+                    boxShadow: '0 6px 20px rgba(79,70,229,0.5)',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:active': { transform: 'translateY(0)' },
+                  transition: 'all 0.2s ease',
+                  '&.Mui-disabled': {
+                    background: 'linear-gradient(135deg, #4F46E5, #6D28D9)',
+                    opacity: 0.7,
+                  },
+                }}
               >
                 {loading
-                  ? <CircularProgress size={22} color="inherit" />
+                  ? <CircularProgress size={20} sx={{ color: 'rgba(255,255,255,0.8)' }} />
                   : 'Sign In'
                 }
               </Button>
-
-              <Divider sx={{ mb: 2.5 }}>
-                <Typography variant="caption" sx={{ color: 'text.disabled', px: 1 }}>
-                  New to HMIS?
-                </Typography>
-              </Divider>
-
-              {/* Register link */}
-              <Button
-                fullWidth
-                variant="outlined"
-                component={RouterLink}
-                to="/register"
-                disabled={loading}
-                sx={{ py: 1.25, borderRadius: 2 }}
-              >
-                Create Student Account
-              </Button>
             </Box>
+
+            {/* Divider + role pills */}
+            <Divider sx={{ my: 2.5, borderColor: '#E2E8F0' }}>
+              <Typography variant="caption" sx={{ color: '#94A3B8', px: 1, fontSize: '0.75rem' }}>
+                Available for
+              </Typography>
+            </Divider>
+
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {ROLE_PILLS.map(r => (
+                <Box
+                  key={r.label}
+                  sx={{
+                    px: 1.25, py: 0.4,
+                    borderRadius: 10,
+                    bgcolor: r.bg,
+                    border: `1px solid ${r.color}30`,
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: r.color,
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {r.label}
+                </Box>
+              ))}
+            </Box>
+
           </CardContent>
         </Card>
 
-        {/* ── Footer note ──────────────────────────────────────────────── */}
+        {/* Footer */}
         <Typography
           variant="caption"
-          sx={{ color: 'rgba(255,255,255,0.2)', textAlign: 'center', display: 'block', mt: 3 }}
+          sx={{ color: 'rgba(255,255,255,0.18)', textAlign: 'center', display: 'block', mt: 3, lineHeight: 1.6 }}
         >
-          Staff, Warden & Admin accounts are managed by the administrator.
+          Account access is managed by the administrator.
+          <br />Contact your hostel admin if you need access.
         </Typography>
       </Box>
     </Box>

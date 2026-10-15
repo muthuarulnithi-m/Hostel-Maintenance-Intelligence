@@ -16,7 +16,7 @@ from app.models.room import Room
 from app.models.student_assignment import StudentRoomAssignment
 from app.models.staff import StaffProfile
 from app.models.staff_skill import StaffSkill
-
+from app.models.rating import Rating
 
 config = context.config
 
