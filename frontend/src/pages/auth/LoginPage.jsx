@@ -191,12 +191,15 @@ function LoginPage() {
               {/* Email */}
               <Box sx={{ mb: 2 }}>
                 <Typography
+                  component="label"
+                  htmlFor="login-email"
                   variant="caption"
                   sx={{ fontWeight: 600, color: '#374151', mb: 0.75, display: 'block', fontSize: '0.8125rem' }}
                 >
                   Email Address
                 </Typography>
                 <TextField
+                  id="login-email"
                   fullWidth
                   type="email"
                   placeholder="you@example.com"
@@ -232,6 +235,8 @@ function LoginPage() {
               <Box sx={{ mb: 2.5 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
                   <Typography
+                    component="label"
+                    htmlFor="login-password"
                     variant="caption"
                     sx={{ fontWeight: 600, color: '#374151', fontSize: '0.8125rem' }}
                   >
@@ -239,6 +244,7 @@ function LoginPage() {
                   </Typography>
                 </Box>
                 <TextField
+                  id="login-password"
                   fullWidth
                   type={showPass ? 'text' : 'password'}
                   placeholder="Enter your password"
@@ -270,8 +276,8 @@ function LoginPage() {
                             onClick={() => setShowPass(p => !p)}
                             edge="end"
                             size="small"
-                            tabIndex={-1}
                             aria-label={showPass ? 'Hide password' : 'Show password'}
+                            aria-pressed={showPass}
                             sx={{ color: '#94A3B8', '&:hover': { color: '#4F46E5' } }}
                           >
                             {showPass

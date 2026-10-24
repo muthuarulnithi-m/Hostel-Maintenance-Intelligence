@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, Drawer, List, ListItemButton, ListItemIcon,
-  ListItemText, Divider, Typography, Avatar, Tooltip,
+  ListItemText, Divider, Typography, Avatar,
   IconButton, Collapse,
 } from '@mui/material';
 import {
@@ -62,6 +62,7 @@ const NAV_CONFIG = {
 
   admin: [
     { label: 'Dashboard',  icon: <DashboardOutlined />,             path: '/admin/dashboard' },
+    { label: 'Complaints', icon: <ReportProblemOutlined />,          path: '/admin/complaints' },
     { label: 'Users',      icon: <PeopleOutlined />,                path: '/admin/users' },
     { label: 'Hostel',     icon: <HomeWorkOutlined />,              path: '/admin/hostel' },
     { label: 'Staff',      icon: <BuildOutlined />,                 path: '/admin/staff' },
@@ -81,7 +82,7 @@ const ROLE_META = {
 };
 
 // ─── A single navigation item ─────────────────────────────────────────────────
-function NavItem({ item, depth = 0 }) {
+function NavItem({ item, depth = 0, onNavigate }) {
   const navigate       = useNavigate();
   const { pathname }   = useLocation();
   const [open, setOpen] = useState(false);
@@ -95,6 +96,7 @@ function NavItem({ item, depth = 0 }) {
       setOpen(prev => !prev);
     } else {
       navigate(item.path);
+      onNavigate?.();
     }
   };
 
@@ -102,6 +104,8 @@ function NavItem({ item, depth = 0 }) {
     <>
       <ListItemButton
         onClick={handleClick}
+        aria-current={isActive ? 'page' : undefined}
+        aria-expanded={hasChildren ? open : undefined}
         sx={{
           ml:  depth * 1.5,
           mr:  1,
@@ -167,7 +171,7 @@ function NavItem({ item, depth = 0 }) {
         <Collapse in={open} timeout="auto" unmountOnExit>
           <List disablePadding>
             {item.children.map(child => (
-              <NavItem key={child.path} item={child} depth={depth + 1} />
+              <NavItem key={child.path} item={child} depth={depth + 1} onNavigate={onNavigate} />
             ))}
           </List>
         </Collapse>
@@ -236,6 +240,7 @@ function SidebarContent({ onClose }) {
           <IconButton
             onClick={onClose}
             size="small"
+            aria-label="Close navigation menu"
             sx={{ color: 'rgba(255,255,255,0.4)', display: { md: 'none' } }}
           >
             <ChevronLeft />
@@ -300,7 +305,7 @@ function SidebarContent({ onClose }) {
         </Typography>
         <List disablePadding>
           {navItems.map(item => (
-            <NavItem key={item.path} item={item} />
+            <NavItem key={item.path} item={item} onNavigate={onClose} />
           ))}
         </List>
       </Box>
@@ -335,14 +340,14 @@ function SidebarContent({ onClose }) {
 }
 
 // ─── Main Sidebar component ───────────────────────────────────────────────────
-function Sidebar({ mobileOpen, onMobileClose }) {
+function Sidebar({ desktopOpen, mobileOpen, onMobileClose }) {
   return (
     <>
-      {/* Desktop — permanent */}
+      {/* Desktop — collapsible permanent drawer */}
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: 'none', md: 'block' },
+          display: { xs: 'none', md: desktopOpen ? 'block' : 'none' },
           width: SIDEBAR_WIDTH,
           flexShrink: 0,
           '& .MuiDrawer-paper': {

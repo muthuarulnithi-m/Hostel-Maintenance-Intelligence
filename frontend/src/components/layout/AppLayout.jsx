@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Toolbar } from '@mui/material';
+import { Box, Toolbar, useMediaQuery, useTheme } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import Sidebar, { SIDEBAR_WIDTH } from './Sidebar';
 import Header from './Header';
@@ -17,9 +17,15 @@ import Header from './Header';
  *   └─────────────┴────────────────────────────────────┘
  */
 function AppLayout() {
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+  const [desktopOpen, setDesktopOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleMobileToggle = () => setMobileOpen(prev => !prev);
+  const handleMenuToggle = () => {
+    if (isDesktop) setDesktopOpen(prev => !prev);
+    else setMobileOpen(prev => !prev);
+  };
   const handleMobileClose  = () => setMobileOpen(false);
 
   return (
@@ -27,6 +33,7 @@ function AppLayout() {
 
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <Sidebar
+        desktopOpen={desktopOpen}
         mobileOpen={mobileOpen}
         onMobileClose={handleMobileClose}
       />
@@ -36,14 +43,19 @@ function AppLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          width:    { md: `calc(100% - ${SIDEBAR_WIDTH}px)` },
+          width: { md: `calc(100% - ${desktopOpen ? SIDEBAR_WIDTH : 0}px)` },
+          minWidth: 0,
           minHeight: '100vh',
           display:  'flex',
           flexDirection: 'column',
         }}
       >
         {/* Fixed header */}
-        <Header onMenuToggle={handleMobileToggle} />
+        <Header
+          onMenuToggle={handleMenuToggle}
+          desktopSidebarOpen={desktopOpen}
+          navigationOpen={isDesktop ? desktopOpen : mobileOpen}
+        />
 
         {/* Toolbar spacer — pushes content below the fixed AppBar */}
         <Toolbar sx={{ minHeight: { xs: 60, sm: 64 } }} />

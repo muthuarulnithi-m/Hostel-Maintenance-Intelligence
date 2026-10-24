@@ -46,7 +46,7 @@ function WardenDashboard() {
       ]);
       setComplaints(complaintsData);
       setAlerts(alertsData.filter(a => !a.is_acknowledged));
-    } catch (err) {
+    } catch {
       setError('Unable to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
@@ -56,15 +56,18 @@ function WardenDashboard() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // ── Derived metrics ──────────────────────────────────────────────────────
-  const openCount      = complaints.filter(c => c.status === 'SUBMITTED').length;
+  const unassignedCount = complaints.filter(c => c.status === 'SUBMITTED' && c.assigned_staff_id == null).length;
   const assignedCount  = complaints.filter(c => c.status === 'ASSIGNED').length;
   const inProgressCount= complaints.filter(c => c.status === 'IN_PROGRESS').length;
-  const highPriCount   = complaints.filter(c => ['HIGH','CRITICAL'].includes(c.priority) && c.status !== 'CLOSED' && c.status !== 'CANCELLED').length;
+  const highPriCount   = complaints.filter(c =>
+    ['HIGH', 'URGENT'].includes(c.priority) &&
+    ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS'].includes(c.status)
+  ).length;
   const resolvedCount  = complaints.filter(c => c.status === 'RESOLVED').length;
   const onHoldCount    = complaints.filter(c => c.status === 'ON_HOLD').length;
-  const unassignedList = complaints.filter(c => c.status === 'SUBMITTED').slice(0, 5);
+  const unassignedList = complaints.filter(c => c.status === 'SUBMITTED' && c.assigned_staff_id == null).slice(0, 5);
   const urgentList     = complaints
-    .filter(c => ['HIGH','CRITICAL'].includes(c.priority) && !['CLOSED','CANCELLED','RESOLVED'].includes(c.status))
+    .filter(c => ['HIGH','URGENT'].includes(c.priority) && ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS'].includes(c.status))
     .slice(0, 5);
 
   // ── Acknowledge alert ────────────────────────────────────────────────────
@@ -148,17 +151,17 @@ function WardenDashboard() {
 
       {/* ── KPI cards ─────────────────────────────────────────────────────── */}
       <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
-        <Grid item xs={6} lg={2.4}>
+        <Grid xs={6} lg={2.4}>
           <StatCard
             title="Unassigned"
-            value={loading ? null : openCount}
+            value={loading ? null : unassignedCount}
             icon={<ReportProblemOutlined />}
             color="#4F46E5"
             subtitle="Awaiting assignment"
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} lg={2.4}>
+        <Grid xs={6} lg={2.4}>
           <StatCard
             title="Assigned"
             value={loading ? null : assignedCount}
@@ -168,7 +171,7 @@ function WardenDashboard() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} lg={2.4}>
+        <Grid xs={6} lg={2.4}>
           <StatCard
             title="In Progress"
             value={loading ? null : inProgressCount}
@@ -178,17 +181,17 @@ function WardenDashboard() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} lg={2.4}>
+        <Grid xs={6} lg={2.4}>
           <StatCard
             title="High Priority"
             value={loading ? null : highPriCount}
             icon={<PriorityHighRounded />}
             color="#F43F5E"
-            subtitle="HIGH + CRITICAL"
+            subtitle="HIGH + URGENT"
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} lg={2.4}>
+        <Grid xs={6} lg={2.4}>
           <StatCard
             title="On Hold"
             value={loading ? null : onHoldCount}
@@ -203,7 +206,7 @@ function WardenDashboard() {
       <Grid container spacing={2.5}>
 
         {/* ── Unassigned complaints ─────────────────────────────────────── */}
-        <Grid item xs={12} lg={6}>
+        <Grid xs={12} lg={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -215,9 +218,9 @@ function WardenDashboard() {
                     Submitted but not yet assigned to staff
                   </Typography>
                 </Box>
-                {openCount > 5 && (
+                {unassignedCount > 5 && (
                   <Button size="small" variant="outlined" onClick={() => navigate('/warden/complaints?status=SUBMITTED')}>
-                    View All ({openCount})
+                    View All ({unassignedCount})
                   </Button>
                 )}
               </Box>
@@ -232,7 +235,7 @@ function WardenDashboard() {
                 />
               ) : (
                 unassignedList.map((c, i) => {
-                  const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.OTHER;
+                  const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.GENERAL;
                   return (
                     <Box key={c.id}>
                       {i > 0 && <Divider sx={{ my: 1 }} />}
@@ -282,7 +285,7 @@ function WardenDashboard() {
         </Grid>
 
         {/* ── High priority active complaints ───────────────────────────── */}
-        <Grid item xs={12} lg={6}>
+        <Grid xs={12} lg={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -291,7 +294,7 @@ function WardenDashboard() {
                     High Priority
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    Active HIGH and CRITICAL complaints
+                    Active HIGH and URGENT complaints
                   </Typography>
                 </Box>
                 {highPriCount > 5 && (
@@ -307,7 +310,7 @@ function WardenDashboard() {
                 <EmptyState
                   icon={<CheckCircleOutlined sx={{ fontSize: 32 }} />}
                   title="No high priority complaints"
-                  description="All HIGH and CRITICAL complaints are resolved."
+                  description="All HIGH and URGENT complaints are resolved."
                 />
               ) : (
                 urgentList.map((c, i) => (
@@ -349,7 +352,7 @@ function WardenDashboard() {
 
         {/* ── Pending student verification ──────────────────────────────── */}
         {resolvedCount > 0 && (
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Alert
               severity="info"
               sx={{ borderRadius: 2 }}
@@ -375,7 +378,7 @@ function WardenDashboard() {
 function getCategoryEmoji(category) {
   const map = {
     GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧',
-    CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌',
+    CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌',
   };
   return map[category] || '📋';
 }

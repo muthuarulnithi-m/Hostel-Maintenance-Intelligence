@@ -133,7 +133,8 @@ function CreateWardenDialog({ open, onClose, onSuccess }) {
               helperText={errors.password || 'Minimum 8 characters'}
               placeholder="Enter a secure password"
               disabled={loading}
-              InputProps={{
+              slotProps={{
+                input: {
                 startAdornment: (
                   <InputAdornment position="start">
                     <LockOutlined sx={{ fontSize:16, color:'text.disabled' }} />
@@ -155,6 +156,8 @@ function CreateWardenDialog({ open, onClose, onSuccess }) {
                     </IconButton>
                   </InputAdornment>
                 ),
+              
+                },
               }}
             />
           </Box>
@@ -243,12 +246,15 @@ function AdminWardensPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             sx={{ minWidth:260 }}
-            InputProps={{
+            slotProps={{
+              input: {
               startAdornment: (
                 <InputAdornment position="start">
                   <SearchOutlined sx={{ fontSize:18, color:'text.disabled' }} />
                 </InputAdornment>
               ),
+            
+              },
             }}
           />
           <Typography variant="caption" sx={{ color:'text.disabled', display:'block', mt:1 }}>

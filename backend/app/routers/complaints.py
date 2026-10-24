@@ -26,6 +26,8 @@ from app.models.complaint import (
 
     Complaint,
 
+    ComplaintPriority,
+
     ComplaintStatus,
 
 )
@@ -55,6 +57,8 @@ from app.schemas.complaint import (
     CancelComplaintRequest,
 
     ComplaintCreate,
+
+    ComplaintDetailResponse,
 
     ComplaintResponse,
 
@@ -118,6 +122,13 @@ from app.services.complaint_alert_service import (
 
 )
 
+from app.services.notification_service import (
+    notify_active_wardens,
+    notify_complaint_users,
+)
+
+from app.services.notification_email import send_warden_complaint_email
+
 from datetime import datetime, timezone
 
 from app.models.complaint_alert import (
@@ -157,6 +168,8 @@ def utc_now():
 def create_complaint(
 
     data: ComplaintCreate,
+
+    background_tasks: BackgroundTasks,
 
     db: Session = Depends(get_db),
 
@@ -250,6 +263,42 @@ def create_complaint(
 
     db.add(history)
 
+    db.flush()
+
+    priority_attention = complaint.priority in {
+        ComplaintPriority.HIGH,
+        ComplaintPriority.URGENT,
+    }
+
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=f"history:{history.id}",
+        user_ids=[current_user.id],
+        title="Complaint submitted",
+        message=f"Your complaint #{complaint.id} was submitted and is awaiting review.",
+        notification_type="COMPLAINT_SUBMITTED",
+    )
+
+    warden_message = f"Complaint #{complaint.id} needs assignment: {complaint.title}."
+    if priority_attention:
+        warden_message = (
+            f"{complaint.priority.value} priority complaint #{complaint.id} "
+            f"needs prompt review: {complaint.title}."
+        )
+    notify_active_wardens(
+        db=db,
+        complaint=complaint,
+        event_id=f"history:{history.id}",
+        title=(
+            "Urgent complaint needs attention"
+            if priority_attention
+            else "New complaint needs assignment"
+        ),
+        message=warden_message,
+        notification_type="COMPLAINT_REQUIRES_ASSIGNMENT",
+    )
+
     repeat_alert = detect_repeat_complaint(
 
     db=db,
@@ -261,6 +310,17 @@ def create_complaint(
     db.commit()
 
     db.refresh(complaint)
+
+    if priority_attention or repeat_alert:
+        background_tasks.add_task(
+            send_warden_complaint_email,
+            complaint.id,
+            complaint.title,
+            complaint.category.value,
+            complaint.priority.value,
+            complaint.room_id,
+            repeat_alert.repeat_count if repeat_alert else None,
+        )
 
     return complaint
 
@@ -539,6 +599,73 @@ def repeated_complaints(
     ]
 
 @router.get(
+    "/{complaint_id}/details",
+    response_model=ComplaintDetailResponse,
+)
+def get_complaint_details(
+    complaint_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(UserRole.ADMIN, UserRole.WARDEN)
+    ),
+):
+    complaint = db.get(Complaint, complaint_id)
+    if not complaint:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Complaint not found",
+        )
+
+    student = complaint.student
+    room = complaint.room
+    block = room.block if room else None
+    hostel = block.hostel if block else None
+    staff = complaint.assigned_staff
+    staff_user = staff.user if staff else None
+
+    result = ComplaintResponse.model_validate(complaint).model_dump()
+    result.update({
+        "student": {
+            "id": student.id,
+            "name": student.name,
+            "email": student.email,
+            "phone": student.phone,
+        },
+        "room": {
+            "id": room.id,
+            "room_number": room.room_number,
+            "floor": room.floor,
+            "capacity": room.capacity,
+            "block_name": block.name if block else None,
+            "block_code": block.code if block else None,
+            "hostel_name": hostel.name if hostel else None,
+            "hostel_code": hostel.code if hostel else None,
+        },
+        "assigned_staff": (
+            {
+                "id": staff.id,
+                "user_id": staff.user_id,
+                "name": staff_user.name if staff_user else None,
+                "email": staff_user.email if staff_user else None,
+                "employee_code": staff.employee_code,
+                "availability_status": staff.availability_status.value,
+            }
+            if staff else None
+        ),
+        "attachments": [
+            {
+                "id": attachment.id,
+                "file_name": attachment.file_name,
+                "content_type": attachment.content_type,
+                "uploaded_at": attachment.uploaded_at,
+            }
+            for attachment in complaint.attachments
+        ],
+    })
+    return result
+
+
+@router.get(
     "/{complaint_id}",
     response_model=ComplaintResponse,
 )
@@ -800,11 +927,15 @@ def assign_staff(
 
         )
 
+    previous_staff_id = complaint.assigned_staff_id
+    if previous_staff_id == staff.id:
+        return complaint
+
     complaint.assigned_staff_id = staff.id
 
     complaint.assigned_at = utc_now()
 
-    change_status(
+    history = change_status(
 
         db=db,
 
@@ -816,6 +947,51 @@ def assign_staff(
 
         note=f"Assigned to staff #{staff.id}",
 
+    )
+
+    previous_staff = (
+        db.get(StaffProfile, previous_staff_id)
+        if previous_staff_id is not None
+        else None
+    )
+    event_id = f"history:{history.id}"
+    is_reassignment = previous_staff_id is not None and previous_staff_id != staff.id
+    event_type = "COMPLAINT_REASSIGNED" if is_reassignment else "COMPLAINT_ASSIGNED"
+    event_title = "Complaint reassigned" if is_reassignment else "New work assigned"
+    event_message = (
+        f"Complaint #{complaint.id} was assigned to {staff.employee_code}."
+    )
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[staff.user_id],
+        title=event_title,
+        message=event_message,
+        notification_type=event_type,
+    )
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[previous_staff.user_id if previous_staff else None],
+        title="Complaint reassigned",
+        message=f"Complaint #{complaint.id} has been reassigned to another staff member.",
+        notification_type="COMPLAINT_REASSIGNED",
+        include_complaint_ref=False,
+    )
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[complaint.student_id],
+        title="Complaint reassigned" if is_reassignment else "Staff assigned",
+        message=(
+            f"A staff member has been assigned to complaint #{complaint.id}."
+            if not is_reassignment
+            else f"The staff member handling complaint #{complaint.id} has changed."
+        ),
+        notification_type=event_type,
     )
 
     db.commit()
@@ -928,7 +1104,7 @@ def start_complaint(
 
     complaint.hold_reason = None
 
-    change_status(
+    history = change_status(
 
         db=db,
 
@@ -940,6 +1116,21 @@ def start_complaint(
 
         note="Staff started/resumed work",
 
+    )
+
+    resumed = history.old_status == ComplaintStatus.ON_HOLD
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=f"history:{history.id}",
+        user_ids=[complaint.student_id],
+        title="Work resumed" if resumed else "Work started",
+        message=(
+            f"Work has resumed on complaint #{complaint.id}."
+            if resumed
+            else f"A staff member has started work on complaint #{complaint.id}."
+        ),
+        notification_type="COMPLAINT_RESUMED" if resumed else "COMPLAINT_STARTED",
     )
 
     db.commit()
@@ -978,6 +1169,8 @@ def hold_complaint(
 
             UserRole.WARDEN,
 
+            UserRole.STAFF,
+
         )
 
     ),
@@ -1002,13 +1195,33 @@ def hold_complaint(
 
         )
 
-    if complaint.status in {
+    if current_user.role == UserRole.STAFF:
 
-        ComplaintStatus.CLOSED,
+        staff = db.scalar(
 
-        ComplaintStatus.CANCELLED,
+            select(StaffProfile).where(
 
-        ComplaintStatus.RESOLVED,
+                StaffProfile.user_id == current_user.id
+
+            )
+
+        )
+
+        if not staff or complaint.assigned_staff_id != staff.id:
+
+            raise HTTPException(
+
+                status_code=status.HTTP_403_FORBIDDEN,
+
+                detail="Complaint is not assigned to you",
+
+            )
+
+    if complaint.status not in {
+
+        ComplaintStatus.ASSIGNED,
+
+        ComplaintStatus.IN_PROGRESS,
 
     }:
 
@@ -1016,7 +1229,7 @@ def hold_complaint(
 
             status_code=status.HTTP_400_BAD_REQUEST,
 
-            detail="Complaint cannot be put on hold",
+            detail="Only assigned or in-progress complaints can be put on hold",
 
         )
 
@@ -1024,7 +1237,7 @@ def hold_complaint(
 
     complaint.held_at = utc_now()
 
-    change_status(
+    history = change_status(
 
         db=db,
 
@@ -1037,6 +1250,27 @@ def hold_complaint(
         note=data.reason.strip(),
 
     )
+
+    event_id = f"history:{history.id}"
+    hold_message = f"Complaint #{complaint.id} has been placed on hold."
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[complaint.student_id],
+        title="Complaint on hold",
+        message=hold_message,
+        notification_type="COMPLAINT_ON_HOLD",
+    )
+    if current_user.role == UserRole.STAFF:
+        notify_active_wardens(
+            db=db,
+            complaint=complaint,
+            event_id=event_id,
+            title="Staff placed a complaint on hold",
+            message=f"{hold_message} Reason: {data.reason.strip()}",
+            notification_type="COMPLAINT_ON_HOLD",
+        )
 
     db.commit()
 
@@ -1142,7 +1376,7 @@ def resolve_complaint(
 
     complaint.resolved_at = utc_now()
 
-    change_status(
+    history = change_status(
 
         db=db,
 
@@ -1154,6 +1388,26 @@ def resolve_complaint(
 
         note=data.description.strip(),
 
+    )
+
+    event_id = f"history:{history.id}"
+    resolved_message = f"Complaint #{complaint.id} has been marked resolved. Please verify the repair."
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[complaint.student_id],
+        title="Complaint resolved",
+        message=resolved_message,
+        notification_type="COMPLAINT_RESOLVED",
+    )
+    notify_active_wardens(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        title="Staff reported a complaint resolved",
+        message=f"Complaint #{complaint.id} was reported resolved by staff.",
+        notification_type="COMPLAINT_RESOLVED",
     )
 
     db.commit()
@@ -1230,7 +1484,7 @@ def verify_resolution(
 
     complaint.closed_at = utc_now()
 
-    change_status(
+    history = change_status(
 
         db=db,
 
@@ -1242,6 +1496,43 @@ def verify_resolution(
 
         note="Student verified the resolution",
 
+    )
+
+    event_id = f"history:{history.id}"
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[complaint.student_id],
+        title="Complaint closed",
+        message=f"You confirmed the resolution of complaint #{complaint.id}.",
+        notification_type="COMPLAINT_CLOSED",
+    )
+    # Ratings are supported by this app and become available only after the
+    # student verifies the resolution. Keep the optional feedback request as
+    # a separate, deduplicated notification so it has a direct action in UI.
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=f"{event_id}:rating",
+        user_ids=[complaint.student_id],
+        title="Rate your completed complaint",
+        message=f"If you have a moment, rate the service for complaint #{complaint.id}.",
+        notification_type="RATING_REQUEST",
+    )
+    assigned_staff = (
+        db.get(StaffProfile, complaint.assigned_staff_id)
+        if complaint.assigned_staff_id is not None
+        else None
+    )
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[assigned_staff.user_id if assigned_staff else None],
+        title="Resolution verified",
+        message=f"The student verified complaint #{complaint.id}; it is now closed.",
+        notification_type="COMPLAINT_CLOSED",
     )
 
     db.commit()
@@ -1324,13 +1615,11 @@ def cancel_complaint(
 
         )
 
-    cancellation_deadline = (
+    created_at = complaint.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
 
-        complaint.created_at
-
-        + timedelta(minutes=30)
-
-    )
+    cancellation_deadline = created_at + timedelta(minutes=30)
 
     now = utc_now()
 
@@ -1352,7 +1641,7 @@ def cancel_complaint(
 
     complaint.cancelled_at = now
 
-    change_status(
+    history = change_status(
 
         db=db,
 
@@ -1364,6 +1653,31 @@ def cancel_complaint(
 
         note=data.reason.strip(),
 
+    )
+
+    event_id = f"history:{history.id}"
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[complaint.student_id],
+        title="Complaint cancelled",
+        message=f"Your complaint #{complaint.id} was cancelled.",
+        notification_type="COMPLAINT_CANCELLED",
+    )
+    assigned_staff = (
+        db.get(StaffProfile, complaint.assigned_staff_id)
+        if complaint.assigned_staff_id is not None
+        else None
+    )
+    notify_complaint_users(
+        db=db,
+        complaint=complaint,
+        event_id=event_id,
+        user_ids=[assigned_staff.user_id if assigned_staff else None],
+        title="Assigned complaint cancelled",
+        message=f"Complaint #{complaint.id} was cancelled by the student.",
+        notification_type="COMPLAINT_CANCELLED",
     )
 
     db.commit()

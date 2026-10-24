@@ -34,13 +34,20 @@ class StudentInfo(BaseModel):
 
     id: int
     name: str | None = None
+    email: str | None = None
+    phone: str | None = None
 
 
 class RoomInfo(BaseModel):
 
     id: int
     room_number: str
+    floor: int
+    capacity: int
     block_name: str | None = None
+    block_code: str | None = None
+    hostel_name: str | None = None
+    hostel_code: str | None = None
 
 
 class StaffInfo(BaseModel):
@@ -48,14 +55,15 @@ class StaffInfo(BaseModel):
     id: int
     user_id: int
     name: str | None = None
-    category: str | None = None
+    email: str | None = None
+    employee_code: str | None = None
+    availability_status: str | None = None
 
 
 class AttachmentInfo(BaseModel):
 
     id: int
     file_name: str
-    file_path: str
     content_type: str
     uploaded_at: datetime
 
@@ -93,6 +101,13 @@ class ComplaintResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+
+
+class ComplaintDetailResponse(ComplaintResponse):
+    student: StudentInfo
+    room: RoomInfo
+    assigned_staff: StaffInfo | None = None
+    attachments: list[AttachmentInfo] = Field(default_factory=list)
 
 
 class AssignComplaintRequest(BaseModel):

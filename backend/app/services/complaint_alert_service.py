@@ -24,13 +24,6 @@ from app.services.notification_service import (
     create_notification,
 )
 
-from app.services.email_service import (
-    send_email,
-)
-
-from app.core.config import settings
-
-
 def utc_now():
 
     return datetime.now(timezone.utc)
@@ -102,52 +95,20 @@ def detect_repeat_complaint(
     db.flush()
 
     wardens = db.scalars(
-    select(User)
-    .where(
-        User.role == UserRole.WARDEN,
-        User.is_active.is_(True),
-    )
+        select(User).where(
+            User.role == UserRole.WARDEN,
+            User.is_active.is_(True),
+        )
     ).all()
     for warden in wardens:
-
-     notification = create_notification(
-        db=db,
-        user_id=warden.id,
-        title="Repeated Complaint Detected",
-        message=message,
-        notification_type="REPEAT_COMPLAINT",
-        complaint_id=complaint.id,
-        alert_id=alert.id,
-     )
-    if warden.email:
-
-        try:
-
-            send_email(
-                recipient=warden.email,
-                subject=(
-                    "Repeated Complaint Detected"
-                ),
-                body=(
-                    "A repeated maintenance complaint "
-                    "has been detected.\n\n"
-                    f"Room ID: {complaint.room_id}\n"
-                    f"Category: "
-                    f"{complaint.category.value}\n"
-                    f"Repeated complaints: "
-                    f"{repeat_count}\n\n"
-                    f"Latest complaint:\n"
-                    f"{complaint.title}\n\n"
-                    f"{complaint.description}\n\n"
-                    "Please review this complaint "
-                    "in the Hostel Maintenance System."
-                ),
-            )
-
-        except Exception as exc:
-
-            print(
-                "Failed to send notification email:",
-                exc,
-            )
-    return 
+        create_notification(
+            db=db,
+            user_id=warden.id,
+            title="Repeated Complaint Detected",
+            message=message,
+            notification_type="REPEAT_COMPLAINT",
+            complaint_id=complaint.id,
+            alert_id=alert.id,
+            event_key=f"complaint-alert:{alert.id}:user:{warden.id}",
+        )
+    return alert

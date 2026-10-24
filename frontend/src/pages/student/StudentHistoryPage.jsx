@@ -115,12 +115,14 @@ function StudentHistoryPage() {
             size="small" placeholder="Search history by title or ID…"
             value={search} onChange={e => setSearch(e.target.value)}
             sx={{ minWidth: 260 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
           <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 1 }}>
@@ -168,7 +170,7 @@ function StudentHistoryPage() {
         <Card>
           <CardContent sx={{ p: 0 }}>
             {filtered.map((c, i) => {
-              const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.OTHER;
+              const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.GENERAL;
               const rating = ratingsMap[c.id];
               const isClosed = c.status === 'CLOSED';
 
@@ -256,7 +258,7 @@ function StudentHistoryPage() {
 }
 
 function getCategoryEmoji(category) {
-  const map = { GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧', CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌' };
+  const map = { GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧', CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌' };
   return map[category] || '📋';
 }
 

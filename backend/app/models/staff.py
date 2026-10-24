@@ -68,4 +68,17 @@ class StaffProfile(Base):
         back_populates="staff",
         cascade="all, delete-orphan",
     )
-    
+
+    @property
+    def name(self) -> str | None:
+        return self.user.name if self.user else None
+
+    @property
+    def email(self) -> str | None:
+        return self.user.email if self.user else None
+
+    @property
+    def phone(self) -> str | None:
+        return self.user.phone if self.user else None
+
+

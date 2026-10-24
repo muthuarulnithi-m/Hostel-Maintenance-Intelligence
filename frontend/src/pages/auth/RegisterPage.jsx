@@ -258,12 +258,15 @@ function RegisterPage() {
                   helperText={fieldErrors.name}
                   disabled={loading}
                   autoFocus
-                  InputProps={{
+                  slotProps={{
+                    input: {
                     startAdornment: (
                       <InputAdornment position="start">
                         <PersonOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
                       </InputAdornment>
                     ),
+                  
+                    },
                   }}
                 />
               </Box>
@@ -282,12 +285,15 @@ function RegisterPage() {
                   error={!!fieldErrors.email}
                   helperText={fieldErrors.email}
                   disabled={loading}
-                  InputProps={{
+                  slotProps={{
+                    input: {
                     startAdornment: (
                       <InputAdornment position="start">
                         <EmailOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
                       </InputAdornment>
                     ),
+                  
+                    },
                   }}
                 />
               </Box>
@@ -307,12 +313,15 @@ function RegisterPage() {
                   error={!!fieldErrors.phone}
                   helperText={fieldErrors.phone || 'Used for urgent complaint notifications only'}
                   disabled={loading}
-                  InputProps={{
+                  slotProps={{
+                    input: {
                     startAdornment: (
                       <InputAdornment position="start">
                         <PhoneOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
                       </InputAdornment>
                     ),
+                  
+                    },
                   }}
                 />
               </Box>
@@ -331,7 +340,8 @@ function RegisterPage() {
                   error={!!fieldErrors.password}
                   helperText={fieldErrors.password}
                   disabled={loading}
-                  InputProps={{
+                  slotProps={{
+                    input: {
                     startAdornment: (
                       <InputAdornment position="start">
                         <LockOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
@@ -350,6 +360,8 @@ function RegisterPage() {
                         </IconButton>
                       </InputAdornment>
                     ),
+                  
+                    },
                   }}
                 />
                 {/* Password strength bar */}
@@ -388,7 +400,8 @@ function RegisterPage() {
                   error={!!fieldErrors.confirm}
                   helperText={fieldErrors.confirm}
                   disabled={loading}
-                  InputProps={{
+                  slotProps={{
+                    input: {
                     startAdornment: (
                       <InputAdornment position="start">
                         <LockOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
@@ -407,6 +420,8 @@ function RegisterPage() {
                         </IconButton>
                       </InputAdornment>
                     ),
+                  
+                    },
                   }}
                 />
               </Box>

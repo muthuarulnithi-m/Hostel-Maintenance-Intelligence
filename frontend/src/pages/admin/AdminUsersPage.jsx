@@ -142,7 +142,8 @@ function CreateStudentDialog({ open, onClose, onSuccess }) {
               helperText={errors.password || 'Minimum 8 characters — share this with the student'}
               placeholder="Enter a secure password"
               disabled={loading}
-              InputProps={{
+              slotProps={{
+                input: {
                 startAdornment: (
                   <InputAdornment position="start">
                     <LockOutlined sx={{ fontSize:16, color:'text.disabled' }} />
@@ -162,6 +163,8 @@ function CreateStudentDialog({ open, onClose, onSuccess }) {
                     </IconButton>
                   </InputAdornment>
                 ),
+              
+                },
               }}
             />
           </Box>
@@ -393,12 +396,15 @@ function AdminUsersPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               sx={{ minWidth:240, flex:1 }}
-              InputProps={{
+              slotProps={{
+                input: {
                 startAdornment: (
                   <InputAdornment position="start">
                     <SearchOutlined sx={{ fontSize:18, color:'text.disabled' }} />
                   </InputAdornment>
                 ),
+              
+                },
               }}
             />
             <TextField

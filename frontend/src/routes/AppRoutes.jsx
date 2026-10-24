@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import AppLayout        from '../components/layout/AppLayout';
 import ProtectedRoute   from './ProtectedRoute';
 import LoginPage        from '../pages/auth/LoginPage';
-import RegisterPage     from '../pages/auth/RegisterPage';
 import StudentDashboard from '../pages/student/StudentDashboard';
 import WardenDashboard  from '../pages/warden/WardenDashboard';
 import AdminDashboard   from '../pages/admin/AdminDashboard';
@@ -69,7 +68,7 @@ function AppRoutes() {
     <Routes>
       {/* ── Public ──────────────────────────────────────────────────── */}
       <Route path="/login"        element={<LoginPage />} />
-      <Route path="/register"     element={<RegisterPage />} />
+      <Route path="/register"     element={<Navigate to="/login" replace />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/"             element={<RootRedirect />} />
 
@@ -143,6 +142,9 @@ function AppRoutes() {
       >
         <Route index                 element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard"      element={<AdminDashboard />} />
+        <Route path="complaints"     element={<WardenComplaintsPage />} />
+        <Route path="complaints/:id" element={<WardenComplaintDetailPage />} />
+        <Route path="analytics"      element={<WardenAnalyticsPage />} />
         <Route path="staff"    element={<AdminStaffPage />} />
         <Route path="wardens"  element={<AdminWardensPage />} />
         <Route path="reports"  element={<AdminReportsPage />} />

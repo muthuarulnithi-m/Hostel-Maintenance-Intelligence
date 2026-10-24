@@ -26,7 +26,7 @@ import {
  */
 function ComplaintCard({ complaint, basePath = '/student' }) {
   const navigate = useNavigate();
-  const catConfig = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.OTHER;
+  const catConfig = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.GENERAL;
 
   return (
     <Card
@@ -126,9 +126,9 @@ function getCategoryEmoji(category) {
     GENERAL:    '📋',
     ELECTRICAL: '⚡',
     PLUMBING:   '🔧',
-    CARPENTRY:  '🪚',
+    CIVIL:  '🪚',
     CLEANING:   '🧹',
-    INTERNET:   '🌐',
+    NETWORK:   '🌐',
     OTHER:      '📌',
   };
   return map[category] || '📋';

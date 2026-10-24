@@ -17,7 +17,14 @@ const complaintApi = {
     const response = await axiosInstance.get('/complaints/my');
     return response.data;
   },
-
+    /**
+   * GET /complaints/assigned/me
+   * Auth: STAFF — returns complaints assigned to the logged-in staff member
+   */
+  getAssignedComplaints: async () => {
+    const response = await axiosInstance.get('/complaints/assigned/me');
+    return response.data;
+  },
   /**
    * GET /complaints/{complaint_id}
    * Auth: any authenticated user
@@ -25,6 +32,24 @@ const complaintApi = {
   getComplaintById: async (complaintId) => {
     const response = await axiosInstance.get(`/complaints/${complaintId}`);
     return response.data;
+  },
+
+  /**
+   * GET /complaints/{complaint_id}/details
+   * Auth: ADMIN or WARDEN. Includes linked student, room, staff, and attachment metadata.
+   */
+  getComplaintDetails: async (complaintId) => {
+    const response = await axiosInstance.get(`/complaints/${complaintId}/details`);
+    return response.data;
+  },
+
+  /** Retrieve an authorized attachment as a temporary object URL for preview. */
+  getAttachmentPreview: async (complaintId, attachmentId) => {
+    const response = await axiosInstance.get(
+      `/complaints/${complaintId}/attachments/${attachmentId}`,
+      { responseType: 'blob' }
+    );
+    return URL.createObjectURL(response.data);
   },
 
   /**

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Breadcrumbs, Link } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { NavigateNext } from '@mui/icons-material';
 
 /**
@@ -33,16 +34,17 @@ function PageHeader({ title, subtitle, action, breadcrumbs }) {
             {breadcrumbs.map((crumb, i) =>
               crumb.href ? (
                 <Link
-                  key={i}
-                  href={crumb.href}
+                  key={`${crumb.label}-${crumb.href}`}
+                  component={RouterLink}
+                  to={crumb.href}
                   underline="hover"
-                  sx={{ fontSize: '0.75rem', color: 'text.disabled' }}
+                  sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
                 >
                   {crumb.label}
                 </Link>
               ) : (
                 <Typography
-                  key={i}
+                  key={`${crumb.label}-${i}`}
                   sx={{ fontSize: '0.75rem', color: 'text.disabled' }}
                 >
                   {crumb.label}

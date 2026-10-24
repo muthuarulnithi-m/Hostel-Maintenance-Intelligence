@@ -167,11 +167,14 @@ function AdminStaffPage() {
           <Box sx={{ display:'flex', gap:2, flexWrap:'wrap', alignItems:'center' }}>
             <TextField size="small" placeholder="Search by employee code or ID…"
               value={search} onChange={e=>setSearch(e.target.value)} sx={{ minWidth:240 }}
-              InputProps={{ startAdornment:(
+              slotProps={{
+                input: { startAdornment:(
                 <InputAdornment position="start">
                   <SearchOutlined sx={{ fontSize:18, color:'text.disabled' }} />
                 </InputAdornment>
-              )}}
+              )
+                },
+              }}
             />
             <TextField select size="small" label="Availability"
               value={availFilter} onChange={e=>setAvailFilter(e.target.value)} sx={{ minWidth:160 }}>
@@ -190,7 +193,7 @@ function AdminStaffPage() {
       {loading && (
         <Grid container spacing={2}>
           {[1,2,3,4].map(i => (
-            <Grid item xs={12} sm={6} key={i}>
+            <Grid xs={12} sm={6} key={i}>
               <Card><CardContent><Skeleton variant="rectangular" height={120} /></CardContent></Card>
             </Grid>
           ))}
@@ -208,7 +211,7 @@ function AdminStaffPage() {
             const avail  = AVAIL_CONFIG[staff.availability_status] || AVAIL_CONFIG.INACTIVE;
             const skills = skillsMap[staff.id] || [];
             return (
-              <Grid item xs={12} sm={6} md={4} key={staff.id}>
+              <Grid xs={12} sm={6} md={4} key={staff.id}>
                 <Card sx={{ height:'100%' }}>
                   <CardContent>
                     <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:1.5 }}>

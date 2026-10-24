@@ -129,7 +129,7 @@ function StaffHistoryPage() {
               </thead>
               <tbody>
                 {filtered.map((c, i) => {
-                  const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.OTHER;
+                  const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.GENERAL;
                   return (
                     <tr
                       key={c.id}

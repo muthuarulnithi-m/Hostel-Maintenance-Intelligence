@@ -197,7 +197,7 @@ function StaffPerformancePage() {
                 </Typography>
               ) : (
                 categoryBreakdown.map((item, i) => {
-                  const catCfg  = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.OTHER;
+                  const catCfg  = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.GENERAL;
                   const percent = total > 0 ? Math.round((item.count / total) * 100) : 0;
                   return (
                     <Box key={item.category}>
@@ -284,7 +284,7 @@ function StaffPerformancePage() {
 function getCategoryEmoji(category) {
   const map = {
     GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧',
-    CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌',
+    CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌',
   };
   return map[category] || '📋';
 }

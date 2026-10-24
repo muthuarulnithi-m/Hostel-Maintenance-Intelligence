@@ -38,6 +38,9 @@ class StaffResponse(BaseModel):
     employee_code: str
     availability_status: AvailabilityStatus
     joined_at: datetime
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

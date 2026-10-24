@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from 'recharts';
 import {
@@ -44,7 +44,7 @@ const PRIORITY_COLORS = {
   LOW:      '#94A3B8',
   MEDIUM:   '#F59E0B',
   HIGH:     '#F97316',
-  CRITICAL: '#F43F5E',
+  URGENT: '#F43F5E',
 };
 
 const CATEGORY_COLORS = [
@@ -104,7 +104,7 @@ function WardenAnalyticsPage() {
   if (error) {
     return (
       <Box>
-        <PageHeader title="Reports & Analytics" />
+        <PageHeader title="Complaint Analytics" />
         <Alert severity="error" sx={{ borderRadius: 2 }}
           action={<Button size="small" color="inherit" onClick={fetchData}>Retry</Button>}>
           {error}
@@ -149,7 +149,7 @@ function WardenAnalyticsPage() {
   return (
     <Box>
       <PageHeader
-        title="Reports & Analytics"
+        title="Complaint Analytics"
         subtitle={`Analysis based on ${complaints.length} total complaints in the system.`}
         action={
           <Button variant="outlined" size="small" onClick={fetchData}>
@@ -160,7 +160,7 @@ function WardenAnalyticsPage() {
 
       {/* ── Summary KPIs ──────────────────────────────────────────────────── */}
       <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Total Complaints"
             value={metrics.total}
@@ -169,7 +169,7 @@ function WardenAnalyticsPage() {
             subtitle="All time"
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Resolution Rate"
             value={`${metrics.resolutionRate}%`}
@@ -178,7 +178,7 @@ function WardenAnalyticsPage() {
             subtitle="Resolved + Closed"
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Avg Resolution Time"
             value={resoStats.count > 0 ? `${resoStats.average}h` : '—'}
@@ -187,7 +187,7 @@ function WardenAnalyticsPage() {
             subtitle={resoStats.count > 0 ? `Based on ${resoStats.count} closed` : 'No closed complaints'}
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Verification Rate"
             value={`${metrics.verificationRate}%`}
@@ -202,7 +202,7 @@ function WardenAnalyticsPage() {
       <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
 
         {/* Monthly Trend Line Chart */}
-        <Grid item xs={12} md={7}>
+        <Grid xs={12} md={7}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -248,7 +248,7 @@ function WardenAnalyticsPage() {
         </Grid>
 
         {/* Status Distribution Pie */}
-        <Grid item xs={12} md={5}>
+        <Grid xs={12} md={5}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -303,7 +303,7 @@ function WardenAnalyticsPage() {
       <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
 
         {/* Category Bar Chart */}
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -349,7 +349,7 @@ function WardenAnalyticsPage() {
         </Grid>
 
         {/* Priority Bar Chart */}
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -396,7 +396,7 @@ function WardenAnalyticsPage() {
       <Grid container spacing={2.5}>
 
         {/* Resolution time stats */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
@@ -443,7 +443,7 @@ function WardenAnalyticsPage() {
                 { label: 'High Priority', value: metrics.highPri,   color: '#F97316' },
                 { label: 'On Hold',       value: metrics.onHold,    color: '#F59E0B' },
                 { label: 'In Progress',   value: metrics.inProgress, color: '#0D9488' },
-              ].map((item, i) => (
+              ].map((item) => (
                 <Box key={item.label} sx={{ mb: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -469,7 +469,7 @@ function WardenAnalyticsPage() {
         </Grid>
 
         {/* Staff workload table */}
-        <Grid item xs={12} md={8}>
+        <Grid xs={12} md={8}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
@@ -507,7 +507,6 @@ function WardenAnalyticsPage() {
                   </Box>
 
                   {staffWork.map((s, i) => {
-                    const activeCount = s.inProgress + (s.total - s.resolved - s.closed - s.onHold);
                     const doneCount   = s.resolved + s.closed;
                     const workloadPct = metrics.total > 0 ? (s.total / metrics.total) * 100 : 0;
 

@@ -165,6 +165,7 @@ def update_availability(
         require_roles(
             UserRole.ADMIN,
             UserRole.WARDEN,
+            UserRole.STAFF,
         )
     ),
 ):
@@ -179,6 +180,12 @@ def update_availability(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Staff member not found",
+        )
+
+    if current_user.role == UserRole.STAFF and staff.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Staff members can update only their own availability",
         )
 
     staff.availability_status = (

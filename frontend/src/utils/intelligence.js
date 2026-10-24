@@ -85,8 +85,8 @@ const CATEGORY_RULES = {
     ],
   },
 
-  CARPENTRY: {
-    label: 'Carpentry',
+  CIVIL: {
+    label: 'Civil',
     keywords: [
       { word: 'door',          weight: 2 },
       { word: 'window',        weight: 2 },
@@ -108,6 +108,22 @@ const CATEGORY_RULES = {
       { word: 'creak',         weight: 2 },
       { word: 'creaking',      weight: 2 },
       { word: 'crack',         weight: 1 },
+    ],
+  },
+
+  FURNITURE: {
+    label: 'Furniture',
+    keywords: [
+      { word: 'table',       weight: 2 },
+      { word: 'desk',        weight: 2 },
+      { word: 'chair',       weight: 2 },
+      { word: 'bed',         weight: 2 },
+      { word: 'drawer',      weight: 3 },
+      { word: 'wardrobe',    weight: 2 },
+      { word: 'cupboard',    weight: 2 },
+      { word: 'furniture',   weight: 3 },
+      { word: 'broken leg',  weight: 3 },
+      { word: 'loose screw', weight: 2 },
     ],
   },
 
@@ -138,8 +154,8 @@ const CATEGORY_RULES = {
     ],
   },
 
-  INTERNET: {
-    label: 'Internet',
+  NETWORK: {
+    label: 'Network',
     keywords: [
       { word: 'internet',      weight: 3 },
       { word: 'wifi',          weight: 3 },
@@ -160,6 +176,30 @@ const CATEGORY_RULES = {
     ],
   },
 
+  SANITATION: {
+    label: 'Sanitation',
+    keywords: [
+      { word: 'washroom',      weight: 3 },
+      { word: 'sanitation',    weight: 3 },
+      { word: 'septic',        weight: 3 },
+      { word: 'sewage',        weight: 3 },
+      { word: 'urinal',        weight: 3 },
+      { word: 'toilet cleaning', weight: 3 },
+    ],
+  },
+
+  SECURITY: {
+    label: 'Security',
+    keywords: [
+      { word: 'security',       weight: 3 },
+      { word: 'unauthorized',   weight: 3 },
+      { word: 'access control', weight: 3 },
+      { word: 'gate lock',      weight: 2 },
+      { word: 'camera',         weight: 2 },
+      { word: 'cctv',           weight: 2 },
+    ],
+  },
+
   GENERAL: {
     label: 'General',
     keywords: [
@@ -175,15 +215,15 @@ const CATEGORY_RULES = {
 
 // ─── Priority keyword rules ───────────────────────────────────────────────────
 const PRIORITY_RULES = {
-  CRITICAL: {
-    label: 'Critical',
+  URGENT: {
+    label: 'Urgent',
     keywords: [
       'fire', 'flooding', 'flood', 'gas leak', 'electric shock',
       'short circuit', 'sparking', 'spark', 'emergency', 'urgent urgent',
       'dangerous', 'hazard', 'hazardous', 'sewage overflow', 'collapsed',
       'burst pipe', 'no power entire', 'unconscious',
     ],
-    threshold: 1, // even 1 match = CRITICAL
+    threshold: 1, // one safety-critical signal marks the complaint urgent
   },
   HIGH: {
     label: 'High',
@@ -221,13 +261,13 @@ const PRIORITY_RULES = {
 export const SKILL_CATEGORY_MAP = {
   ELECTRICAL:  ['ELECTRICAL'],
   PLUMBING:    ['PLUMBING'],
-  CIVIL:       ['CARPENTRY', 'GENERAL'],
-  FURNITURE:   ['CARPENTRY'],
-  SANITATION:  ['CLEANING', 'PLUMBING'],
-  NETWORK:     ['INTERNET'],
+  CIVIL:       ['CIVIL', 'GENERAL'],
+  FURNITURE:   ['FURNITURE'],
+  SANITATION:  ['SANITATION', 'CLEANING', 'PLUMBING'],
+  NETWORK:     ['NETWORK'],
   CLEANING:    ['CLEANING'],
   SECURITY:    ['GENERAL'],
-  GENERAL:     ['GENERAL', 'CARPENTRY', 'CLEANING'],
+  GENERAL:     ['GENERAL', 'CIVIL', 'FURNITURE', 'CLEANING'],
 };
 
 // ─── Text normalizer ──────────────────────────────────────────────────────────
@@ -246,7 +286,7 @@ function normalizeText(text) {
  * Given a complaint description string, returns:
  * {
  *   category:   'ELECTRICAL' | 'PLUMBING' | ...
- *   priority:   'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+ *   priority:   'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
  *   confidence: 'high' | 'medium' | 'low'
  *   categoryScore: number   (raw score for category)
  *   matchedKeywords: string[] (which keywords triggered)
@@ -304,7 +344,7 @@ export function classifyComplaint(text) {
   // ── Score priority ───────────────────────────────────────────────────────
   let detectedPriority = 'MEDIUM'; // default
 
-  // Check from highest to lowest (CRITICAL first)
+  // Check from highest to lowest (URGENT first)
   for (const [level, rule] of Object.entries(PRIORITY_RULES)) {
     const hits = rule.keywords.filter(kw => normalized.includes(kw));
     if (hits.length >= rule.threshold) {

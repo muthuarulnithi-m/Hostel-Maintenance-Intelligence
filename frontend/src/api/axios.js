@@ -1,9 +1,14 @@
 import axios from 'axios';
 
 // ─── Base URL from environment variable ───────────────────────────────────────
-// Set VITE_API_URL in your .env file
-// Example: VITE_API_URL=http://127.0.0.1:8000
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
+const BASE_URL = configuredBaseUrl || (
+  import.meta.env.DEV ? 'http://127.0.0.1:8000' : ''
+);
+
+if (!BASE_URL) {
+  throw new Error('VITE_API_URL is required for production builds.');
+}
 
 // ─── Create Axios instance ────────────────────────────────────────────────────
 const axiosInstance = axios.create({

@@ -217,7 +217,7 @@ function WardenRepeatComplaintsPage() {
 function getCategoryEmoji(category) {
   const map = {
     GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧',
-    CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌',
+    CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌',
   };
   return map[category] || '📋';
 }

@@ -217,13 +217,13 @@ function CreateRoomDialog({ open, onClose, onSuccess, blocks }) {
             error={!!errors.room_number} helperText={errors.room_number}
             placeholder="e.g. 101 or A-101" />
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField fullWidth label="Floor *" size="small" type="number"
                 value={form.floor} onChange={e => setForm(p=>({...p,floor:e.target.value}))}
                 error={!!errors.floor} helperText={errors.floor}
                 inputProps={{ min: 0 }} placeholder="0" />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField fullWidth label="Capacity *" size="small" type="number"
                 value={form.capacity} onChange={e => setForm(p=>({...p,capacity:e.target.value}))}
                 error={!!errors.capacity} helperText={errors.capacity || 'Max students per room'}
@@ -363,7 +363,7 @@ function AdminHostelPage() {
           { label: 'Rooms',        value: rooms.length,                     color: '#D97706', icon: <MeetingRoomOutlined /> },
           { label: 'Active Rooms', value: rooms.filter(r=>r.is_active).length, color: '#10B981', icon: <CheckCircleOutlined /> },
         ].map(item => (
-          <Grid item xs={6} md={3} key={item.label}>
+          <Grid xs={6} md={3} key={item.label}>
             <Card>
               <CardContent sx={{ textAlign: 'center', py: '20px !important' }}>
                 <Box sx={{ width:44, height:44, borderRadius:2, bgcolor:`${item.color}18`, mx:'auto', mb:1, display:'flex', alignItems:'center', justifyContent:'center', color:item.color }}>

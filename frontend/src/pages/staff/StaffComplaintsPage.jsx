@@ -19,7 +19,6 @@ import {
   getCategoryLabel,
   CATEGORY_CONFIG,
   PRIORITY_CONFIG,
-  STATUS_CONFIG,
 } from '../../utils/formatters';
 
 // Staff-relevant status filters
@@ -32,7 +31,7 @@ const STATUS_FILTERS = [
   { value: 'CLOSED',      label: 'Closed' },
 ];
 
-const PRIORITY_WEIGHT = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+const PRIORITY_WEIGHT = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
 
 function StaffComplaintsPage() {
   const navigate = useNavigate();
@@ -245,8 +244,8 @@ function StaffComplaintsPage() {
               </thead>
               <tbody>
                 {filtered.map((c, i) => {
-                  const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.OTHER;
-                  const isUrgent = ['HIGH','CRITICAL'].includes(c.priority) &&
+                  const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.GENERAL;
+                  const isUrgent = ['HIGH','URGENT'].includes(c.priority) &&
                     ['ASSIGNED','IN_PROGRESS'].includes(c.status);
                   return (
                     <tr

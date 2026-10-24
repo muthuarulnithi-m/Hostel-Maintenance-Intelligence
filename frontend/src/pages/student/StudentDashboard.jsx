@@ -108,7 +108,7 @@ function StudentDashboard() {
 
       {/* ── KPI cards ─────────────────────────────────────────────────────── */}
       <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Active"
             value={loading ? null : activeCount}
@@ -118,7 +118,7 @@ function StudentDashboard() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Pending Verification"
             value={loading ? null : pendingVerify}
@@ -128,7 +128,7 @@ function StudentDashboard() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Closed"
             value={loading ? null : resolvedCount}
@@ -138,7 +138,7 @@ function StudentDashboard() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard
             title="Total"
             value={loading ? null : complaints.length}
@@ -223,7 +223,7 @@ function StudentDashboard() {
                 </thead>
                 <tbody>
                   {recentComplaints.map((c, i) => {
-                    const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.OTHER;
+                    const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.GENERAL;
                     return (
                       <tr
                         key={c.id}

@@ -33,6 +33,7 @@ def add_history(
     )
 
     db.add(history)
+    return history
 
 
 def change_status(
@@ -47,7 +48,7 @@ def change_status(
 
     complaint.status = new_status
 
-    add_history(
+    history = add_history(
         db=db,
         complaint=complaint,
         changed_by_user_id=changed_by_user_id,
@@ -55,3 +56,5 @@ def change_status(
         new_status=new_status,
         note=note,
     )
+    db.flush()
+    return history

@@ -19,7 +19,7 @@ import complaintApi      from '../../api/complaintApi';
 import staffApi          from '../../api/staffApi';
 import hostelApi         from '../../api/hostelApi';
 import axiosInstance     from '../../api/axios';
-import { formatRelative, getCategoryLabel, CATEGORY_CONFIG } from '../../utils/formatters';
+import { formatRelative, CATEGORY_CONFIG } from '../../utils/formatters';
 import StatusChip        from '../../components/common/StatusChip';
 import PriorityChip      from '../../components/common/PriorityChip';
 
@@ -63,7 +63,7 @@ function AdminDashboard() {
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 5);
 
-  const openCount    = complaints.filter(c => !['CLOSED','CANCELLED'].includes(c.status)).length;
+  const openCount    = complaints.filter(c => ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS'].includes(c.status)).length;
   const closedCount  = complaints.filter(c => c.status === 'CLOSED').length;
 
   return (
@@ -87,16 +87,16 @@ function AdminDashboard() {
 
       {/* KPI cards */}
       <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard title="Total Users"       value={loading ? null : stats?.users}      icon={<PeopleOutlined />}     color="#4F46E5" loading={loading} />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard title="Staff Members"     value={loading ? null : stats?.staff}      icon={<BuildOutlined />}      color="#0D9488" loading={loading} />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard title="Hostels"           value={loading ? null : stats?.hostels}    icon={<HomeWorkOutlined />}   color="#D97706" loading={loading} />
         </Grid>
-        <Grid item xs={6} md={3}>
+        <Grid xs={6} md={3}>
           <StatCard title="Total Complaints"  value={loading ? null : stats?.complaints} icon={<BarChartOutlined />}   color="#DC2626" loading={loading} />
         </Grid>
       </Grid>
@@ -104,12 +104,12 @@ function AdminDashboard() {
       <Grid container spacing={2.5}>
 
         {/* Recent complaints */}
-        <Grid item xs={12} md={8}>
+        <Grid xs={12} md={8}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>Recent Complaints</Typography>
-                <Button size="small" variant="outlined" onClick={() => navigate('/warden/complaints')}>
+                <Button size="small" variant="outlined" onClick={() => navigate('/admin/complaints')}>
                   View All
                 </Button>
               </Box>
@@ -135,7 +135,7 @@ function AdminDashboard() {
                     <Box key={c.id}>
                       {i > 0 && <Divider sx={{ my: 1.25 }} />}
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', p: 0.75, borderRadius: 1.5, '&:hover': { bgcolor: 'action.hover' } }}
-                        onClick={() => navigate(`/warden/complaints/${c.id}`)}>
+                        onClick={() => navigate(`/admin/complaints/${c.id}`)}>
                         <Box sx={{ width: 36, height: 36, borderRadius: 1.5, bgcolor: catCfg.bg, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
                           {getCategoryEmoji(c.category)}
                         </Box>
@@ -161,7 +161,7 @@ function AdminDashboard() {
         </Grid>
 
         {/* System health */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
@@ -196,7 +196,7 @@ function AdminDashboard() {
                 { label: 'Manage Users',   path: '/admin/users' },
                 { label: 'Hostel Setup',   path: '/admin/hostel' },
                 { label: 'Staff List',     path: '/admin/staff' },
-                { label: 'View Reports',   path: '/warden/reports' },
+                { label: 'View Reports',   path: '/admin/analytics' },
               ].map(link => (
                 <Button
                   key={link.path}
@@ -224,7 +224,7 @@ function AdminDashboard() {
 }
 
 function getCategoryEmoji(category) {
-  const map = { GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧', CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌' };
+  const map = { GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧', CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌' };
   return map[category] || '📋';
 }
 

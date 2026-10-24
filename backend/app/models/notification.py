@@ -65,6 +65,13 @@ class Notification(Base):
         index=True,
     )
 
+    event_key: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
+
     is_read: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

@@ -121,10 +121,10 @@ function ComplaintDetailPage() {
       <Box sx={{ maxWidth: 900, mx: 'auto' }}>
         <Skeleton variant="text" width={200} height={32} sx={{ mb: 3 }} />
         <Grid container spacing={2.5}>
-          <Grid item xs={12} md={8}>
+          <Grid xs={12} md={8}>
             <Card><CardContent><Skeleton variant="rectangular" height={300} /></CardContent></Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Card><CardContent><Skeleton variant="rectangular" height={200} /></CardContent></Card>
           </Grid>
         </Grid>
@@ -151,7 +151,7 @@ function ComplaintDetailPage() {
 
   if (!complaint) return null;
 
-  const catConfig    = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.OTHER;
+  const catConfig    = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.GENERAL;
   const timeline     = buildTimeline(complaint);
   const canCancel    = isCancellable(complaint);
   const canVerify    = complaint.status === 'RESOLVED';
@@ -202,7 +202,7 @@ function ComplaintDetailPage() {
       <Grid container spacing={2.5}>
 
         {/* ── Left column — main details ───────────────────────────────── */}
-        <Grid item xs={12} md={8}>
+        <Grid xs={12} md={8}>
 
           {/* Details card */}
           <Card sx={{ mb: 2.5 }}>
@@ -293,7 +293,7 @@ function ComplaintDetailPage() {
         </Grid>
 
         {/* ── Right column — meta info + actions ──────────────────────── */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
 
           {/* Meta card */}
           <Card sx={{ mb: 2.5 }}>
@@ -478,7 +478,7 @@ function ComplaintDetailPage() {
 function getCategoryEmoji(category) {
   const map = {
     GENERAL: '📋', ELECTRICAL: '⚡', PLUMBING: '🔧',
-    CARPENTRY: '🪚', CLEANING: '🧹', INTERNET: '🌐', OTHER: '📌',
+    CIVIL: '🪚', CLEANING: '🧹', NETWORK: '🌐', OTHER: '📌',
   };
   return map[category] || '📋';
 }

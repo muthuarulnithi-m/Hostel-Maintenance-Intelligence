@@ -266,7 +266,7 @@ function NewComplaintPage() {
             <Grid container spacing={2.5}>
 
               {/* Title */}
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, display: 'block' }}>
                   Complaint Title <span style={{ color: '#F43F5E' }}>*</span>
                 </Typography>
@@ -278,18 +278,20 @@ function NewComplaintPage() {
                   error={!!fieldErrors.title}
                   helperText={fieldErrors.title || `${form.title.length}/100 characters`}
                   inputProps={{ maxLength: 100 }}
-                  InputProps={{
-                    startAdornment: (
-                      <Box sx={{ mr: 1, color: 'text.disabled', display: 'flex' }}>
-                        <TitleOutlined sx={{ fontSize: 18 }} />
-                      </Box>
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Box sx={{ mr: 1, color: 'text.disabled', display: 'flex' }}>
+                          <TitleOutlined sx={{ fontSize: 18 }} />
+                        </Box>
+                      ),
+                    },
                   }}
                 />
               </Grid>
 
               {/* Category */}
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, display: 'block' }}>
                   Category <span style={{ color: '#F43F5E' }}>*</span>
                 </Typography>
@@ -300,12 +302,14 @@ function NewComplaintPage() {
                   onChange={handleChange('category')}
                   error={!!fieldErrors.category}
                   helperText={fieldErrors.category || 'Select the type of issue'}
-                  InputProps={{
-                    startAdornment: (
-                      <Box sx={{ mr: 1, color: 'text.disabled', display: 'flex' }}>
-                        <CategoryOutlined sx={{ fontSize: 18 }} />
-                      </Box>
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Box sx={{ mr: 1, color: 'text.disabled', display: 'flex' }}>
+                          <CategoryOutlined sx={{ fontSize: 18 }} />
+                        </Box>
+                      ),
+                    },
                   }}
                 >
                   <MenuItem value="" disabled>
@@ -320,7 +324,7 @@ function NewComplaintPage() {
               </Grid>
 
               {/* Priority */}
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, display: 'block' }}>
                   Priority <span style={{ color: '#F43F5E' }}>*</span>
                 </Typography>
@@ -331,12 +335,14 @@ function NewComplaintPage() {
                   onChange={handleChange('priority')}
                   error={!!fieldErrors.priority}
                   helperText={fieldErrors.priority || 'How urgent is this issue?'}
-                  InputProps={{
-                    startAdornment: (
-                      <Box sx={{ mr: 1, color: 'text.disabled', display: 'flex' }}>
-                        <PriorityHighOutlined sx={{ fontSize: 18 }} />
-                      </Box>
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Box sx={{ mr: 1, color: 'text.disabled', display: 'flex' }}>
+                          <PriorityHighOutlined sx={{ fontSize: 18 }} />
+                        </Box>
+                      ),
+                    },
                   }}
                 >
                   {PRIORITY_OPTIONS.map(opt => (
@@ -356,7 +362,7 @@ function NewComplaintPage() {
               </Grid>
 
               {/* Description */}
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, display: 'block' }}>
                   Description <span style={{ color: '#F43F5E' }}>*</span>
                 </Typography>
@@ -382,7 +388,7 @@ function NewComplaintPage() {
               </Grid>
           {/* Urgent warning */}
           {isUrgent && (
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               <strong>⚠️ Urgent issue detected.</strong> If this is an emergency
               (fire, flood, electric shock), please contact the warden or hostel
@@ -393,7 +399,7 @@ function NewComplaintPage() {
 
 {/* Classification suggestion */}
 {classification && classification.category !== 'GENERAL' && (
-  <Grid item xs={12}>
+  <Grid xs={12}>
     <ClassificationSuggestion
       result={classification}
       applied={suggestionApplied}
@@ -407,7 +413,7 @@ function NewComplaintPage() {
 )}
  
               {/* Photo upload */}
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5, display: 'block' }}>
                   Photo{' '}
                   <span style={{ color: '#94A3B8', fontWeight: 400 }}>(optional — max 5MB, JPG/PNG/WEBP)</span>

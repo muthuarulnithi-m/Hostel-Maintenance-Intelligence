@@ -24,7 +24,7 @@ export function getStatusDistribution(complaints) {
 // ─── Priority distribution ────────────────────────────────────────────────────
 /**
  * Returns count per priority.
- * e.g. { LOW: 4, MEDIUM: 10, HIGH: 6, CRITICAL: 2 }
+ * e.g. { LOW: 4, MEDIUM: 10, HIGH: 6, URGENT: 2 }
  */
 export function getPriorityDistribution(complaints) {
   const counts = {};
@@ -145,10 +145,10 @@ export function getSummaryMetrics(complaints) {
   const resolved    = complaints.filter(c => c.status === 'RESOLVED').length;
   const closed      = complaints.filter(c => c.status === 'CLOSED').length;
   const cancelled   = complaints.filter(c => c.status === 'CANCELLED').length;
-  const highPri     = complaints.filter(c => ['HIGH','CRITICAL'].includes(c.priority) &&
-    !['CLOSED','CANCELLED'].includes(c.status)).length;
-  const unassigned  = complaints.filter(c => !c.assigned_staff_id &&
-    !['CLOSED','CANCELLED'].includes(c.status)).length;
+  const highPri     = complaints.filter(c => ['HIGH','URGENT'].includes(c.priority) &&
+    ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS'].includes(c.status)).length;
+  const unassigned  = complaints.filter(c => c.status === 'SUBMITTED' &&
+    c.assigned_staff_id == null).length;
 
   const resolutionRate = total > 0
     ? Math.round(((resolved + closed) / total) * 100)

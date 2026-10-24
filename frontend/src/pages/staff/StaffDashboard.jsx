@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Grid, Card, CardContent, Typography,
   Alert, Button, Chip, Skeleton, Divider,
-  LinearProgress, Snackbar,
+  Snackbar,
 } from '@mui/material';
 import {
   AssignmentOutlined,
@@ -12,7 +12,6 @@ import {
   PauseCircleOutlined,
   ArrowForwardOutlined,
   PersonOutlined,
-  WarningAmberOutlined,
 } from '@mui/icons-material';
 import { useAuth }        from '../../context/AuthContext';
 import PageHeader         from '../../components/common/PageHeader';
@@ -27,7 +26,6 @@ import {
   formatRelative,
   getCategoryLabel,
   CATEGORY_CONFIG,
-  PRIORITY_CONFIG,
 } from '../../utils/formatters';
 
 // Availability config
@@ -59,7 +57,7 @@ function StaffDashboard() {
     setLoading(true);
     setError('');
     try {
-      const data = await complaintApi.getAllComplaints();
+      const data = await complaintApi.getAssignedComplaints();
       setComplaints(data);
     } catch {
       setError('Unable to load your assigned complaints.');
@@ -77,7 +75,7 @@ function StaffDashboard() {
   const completed   = complaints.filter(c => ['RESOLVED','CLOSED'].includes(c.status)).length;
 
   // Most urgent = ASSIGNED or IN_PROGRESS, sorted by priority weight
-  const priorityWeight = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+  const priorityWeight = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
   const urgentWork = complaints
     .filter(c => ['ASSIGNED', 'IN_PROGRESS', 'ON_HOLD'].includes(c.status))
     .sort((a, b) => (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0))
@@ -262,8 +260,8 @@ function StaffDashboard() {
           )}
 
           {!loading && urgentWork.map((c, i) => {
-            const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.OTHER;
-            const isHighUrgency = ['HIGH','CRITICAL'].includes(c.priority);
+            const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.GENERAL;
+            const isHighUrgency = ['HIGH','URGENT'].includes(c.priority);
 
             return (
               <Box key={c.id}>
@@ -357,7 +355,7 @@ function StaffDashboard() {
 function getCategoryEmoji(category) {
   const map = {
     GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧',
-    CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌',
+    CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌',
   };
   return map[category] || '📋';
 }

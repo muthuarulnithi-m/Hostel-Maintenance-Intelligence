@@ -27,8 +27,8 @@ const PRIORITY_CONFIG = {
     color:   '#C2410C',
     icon:    <KeyboardArrowUp sx={{ fontSize: '14px !important' }} />,
   },
-  CRITICAL: {
-    label:   'Critical',
+  URGENT: {
+    label:   'Urgent',
     bgcolor: '#FFF1F2',
     color:   '#9F1239',
     icon:    <PriorityHighRounded sx={{ fontSize: '14px !important' }} />,
@@ -40,7 +40,7 @@ const PRIORITY_CONFIG = {
  * Consistently styled complaint priority badge.
  *
  * Props:
- *   priority (string) — LOW | MEDIUM | HIGH | CRITICAL
+ *   priority (string) — LOW | MEDIUM | HIGH | URGENT
  *   size     ('small'|'medium')
  */
 function PriorityChip({ priority, size = 'small' }) {

@@ -23,20 +23,19 @@ import {
   CATEGORY_CONFIG,
   buildTimeline,
 } from '../../utils/formatters';
-// ADD to existing imports in WardenComplaintDetailPage.jsx:
-import SmartAssignBadge from '../../components/intelligence/SmartAssignBadge';
-import RepeatAlertBadge from '../../components/intelligence/RepeatAlertBadge';
-import { getSuggestedStaff } from '../../utils/intelligence';
-import staffApi from '../../api/staffApi';
+import { useAuth } from '../../context/AuthContext';
 
 
 
 function WardenComplaintDetailPage() {
   const { id }   = useParams();
   const navigate = useNavigate();
+  const { userRole } = useAuth();
+  const basePath = userRole === 'admin' ? '/admin' : '/warden';
 
   const [complaint,  setComplaint]  = useState(null);
   const [history,    setHistory]    = useState([]);
+  const [attachmentUrls, setAttachmentUrls] = useState({});
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
 
@@ -44,11 +43,6 @@ function WardenComplaintDetailPage() {
   const [assignOpen,  setAssignOpen]  = useState(false);
   const [assigning,   setAssigning]   = useState(false);
   const [assignError, setAssignError] = useState('');
-  // ADD inside WardenComplaintDetailPage function after existing state:
-const [staffList,    setStaffList]    = useState([]);
-const [skillsMap,    setSkillsMap]    = useState({});
-const [repeatAlert,  setRepeatAlert]  = useState(null);
-const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
   // ── Snackbar feedback ────────────────────────────────────────────────────
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const showSnack = (message, severity = 'success') =>
@@ -60,7 +54,7 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
     setError('');
     try {
       const [cData, hData] = await Promise.all([
-        complaintApi.getComplaintById(id),
+        complaintApi.getComplaintDetails(id),
         complaintApi.getComplaintHistory(id),
       ]);
       setComplaint(cData);
@@ -75,6 +69,31 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
   }, [id]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const objectUrls = [];
+    const images = (complaint?.attachments || []).filter(item => item.content_type?.startsWith('image/'));
+    setAttachmentUrls({});
+    if (!images.length) return undefined;
+
+    Promise.all(images.map(async attachment => {
+      try {
+        const url = await complaintApi.getAttachmentPreview(complaint.id, attachment.id);
+        objectUrls.push(url);
+        return [attachment.id, url];
+      } catch {
+        return [attachment.id, null];
+      }
+    })).then(entries => {
+      if (!cancelled) setAttachmentUrls(Object.fromEntries(entries));
+    });
+
+    return () => {
+      cancelled = true;
+      objectUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [complaint]);
 
   // ── Assign staff ─────────────────────────────────────────────────────────
   const handleAssign = async (staffId) => {
@@ -108,10 +127,10 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
       <Box sx={{ maxWidth: 980, mx: 'auto' }}>
         <Skeleton variant="text" width={200} height={32} sx={{ mb: 3 }} />
         <Grid container spacing={2.5}>
-          <Grid item xs={12} md={8}>
+          <Grid xs={12} md={8}>
             <Card><CardContent><Skeleton variant="rectangular" height={300} /></CardContent></Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Card><CardContent><Skeleton variant="rectangular" height={200} /></CardContent></Card>
           </Grid>
         </Grid>
@@ -122,7 +141,7 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
   if (error) {
     return (
       <Box sx={{ maxWidth: 980, mx: 'auto' }}>
-        <Button startIcon={<ArrowBackOutlined />} onClick={() => navigate('/warden/complaints')} sx={{ mb: 2 }}>
+        <Button startIcon={<ArrowBackOutlined />} onClick={() => navigate(`${basePath}/complaints`)} sx={{ mb: 2 }}>
           Back to Complaints
         </Button>
         <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
@@ -132,7 +151,7 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
 
   if (!complaint) return null;
 
-  const catConfig = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.OTHER;
+  const catConfig = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.GENERAL;
   const timeline  = buildTimeline(complaint);
 
   return (
@@ -141,12 +160,12 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
         title={`Complaint #${complaint.id}`}
         subtitle={complaint.title}
         breadcrumbs={[
-          { label: 'Dashboard',   href: '/warden/dashboard' },
-          { label: 'Complaints',  href: '/warden/complaints' },
+          { label: 'Dashboard',   href: `${basePath}/dashboard` },
+          { label: 'Complaints',  href: `${basePath}/complaints` },
           { label: `#${complaint.id}` },
         ]}
         action={
-          <Button startIcon={<ArrowBackOutlined />} variant="outlined" onClick={() => navigate('/warden/complaints')}>
+          <Button startIcon={<ArrowBackOutlined />} variant="outlined" onClick={() => navigate(`${basePath}/complaints`)}>
             Back
           </Button>
         }
@@ -155,7 +174,7 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
       <Grid container spacing={2.5}>
 
         {/* ── Left column ──────────────────────────────────────────────── */}
-        <Grid item xs={12} md={8}>
+        <Grid xs={12} md={8}>
 
           {/* Details card */}
           <Card sx={{ mb: 2.5 }}>
@@ -220,6 +239,63 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
             </CardContent>
           </Card>
 
+          <Card sx={{ mb: 2.5 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Student and room
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid xs={12} sm={6}>
+                  <Typography variant="overline" color="text.secondary">Student</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{complaint.student?.name || `Student #${complaint.student_id}`}</Typography>
+                  <Typography variant="body2" color="text.secondary">ID #{complaint.student_id}</Typography>
+                  {complaint.student?.email && <Typography variant="body2">{complaint.student.email}</Typography>}
+                  {complaint.student?.phone && <Typography variant="body2">{complaint.student.phone}</Typography>}
+                </Grid>
+                <Grid xs={12} sm={6}>
+                  <Typography variant="overline" color="text.secondary">Room assignment</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {complaint.room?.hostel_name || complaint.room?.hostel_code || 'Hostel'} · {complaint.room?.block_name || complaint.room?.block_code || 'Block'} · Room {complaint.room?.room_number || `#${complaint.room_id}`}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Floor {complaint.room?.floor ?? '—'} · Capacity {complaint.room?.capacity ?? '—'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ mb: 2.5 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Attachments</Typography>
+              {complaint.attachments?.length ? (
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  {complaint.attachments.map(attachment => (
+                    <Box key={attachment.id} sx={{ width: { xs: '100%', sm: 180 } }}>
+                      {attachment.content_type?.startsWith('image/') && attachmentUrls[attachment.id] ? (
+                        <Box
+                          component="img"
+                          src={attachmentUrls[attachment.id]}
+                          alt={`Attachment: ${attachment.file_name}`}
+                          sx={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 1.5, border: 1, borderColor: 'divider' }}
+                        />
+                      ) : (
+                        <Box sx={{ height: 140, display: 'grid', placeItems: 'center', bgcolor: 'action.hover', borderRadius: 1.5 }}>
+                          <Typography variant="caption" color="text.secondary">Preview unavailable</Typography>
+                        </Box>
+                      )}
+                      <Typography variant="caption" display="block" sx={{ mt: 0.75, overflowWrap: 'anywhere' }}>
+                        {attachment.file_name}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">No attachments were submitted with this complaint.</Typography>
+              )}
+            </CardContent>
+          </Card>
+
           {/* History card — uses real API history + timeline */}
           <Card sx={{ mb: 2.5 }}>
             <CardContent>
@@ -271,13 +347,13 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
         </Grid>
 
         {/* ── Right column ─────────────────────────────────────────────── */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
 
           {/* Actions card */}
           <Card sx={{ mb: 2.5 }}>
             <CardContent>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                Warden Actions
+                {userRole === 'admin' ? 'Admin Actions' : 'Warden Actions'}
               </Typography>
 
               <Button
@@ -311,13 +387,15 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
                 { label: 'Priority',       value: <PriorityChip priority={complaint.priority} /> },
                 { label: 'Category',       value: getCategoryLabel(complaint.category) },
                 { label: 'Room',           value: complaint.room_id ? `Room #${complaint.room_id}` : '—' },
-                { label: 'Student',        value: `User #${complaint.student_id}` },
+                { label: 'Student',        value: complaint.student?.name || `User #${complaint.student_id}` },
                 {
                   label: 'Assigned Staff',
                   value: complaint.assigned_staff_id
-                    ? `Staff #${complaint.assigned_staff_id}`
+                    ? `${complaint.assigned_staff?.name || `Staff #${complaint.assigned_staff_id}`} · ${complaint.assigned_staff?.employee_code || ''}`
                     : 'Unassigned',
                 },
+                { label: 'Assigned Date',  value: complaint.assigned_at ? formatDateTime(complaint.assigned_at) : '—' },
+                { label: 'Student Verification', value: complaint.status === 'CLOSED' ? 'Verified' : complaint.status === 'RESOLVED' ? 'Awaiting student verification' : 'Not resolved' },
                 { label: 'Submitted',      value: formatDateTime(complaint.created_at) },
                 { label: 'Last Updated',   value: formatRelative(complaint.updated_at) },
               ].map((row, i) => (
@@ -372,7 +450,7 @@ const [preSelectedStaffId, setPreSelectedStaffId] = useState(null);
 function getCategoryEmoji(category) {
   const map = {
     GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧',
-    CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌',
+    CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌',
   };
   return map[category] || '📋';
 }

@@ -23,7 +23,7 @@ function AdminReportsPage() {
             desc:    'Status distribution, category breakdown, monthly trends, resolution time, staff workload.',
             icon:    <BarChartOutlined sx={{ fontSize:32, color:'#4F46E5' }} />,
             color:   '#EEF2FF',
-            action:  () => navigate('/warden/reports'),
+            action:  () => navigate('/admin/analytics'),
             label:   'View Analytics',
           },
           {
@@ -39,7 +39,7 @@ function AdminReportsPage() {
             desc:    'Browse, filter, and manage all complaints in the hostel system.',
             icon:    <ReportProblemOutlined sx={{ fontSize:32, color:'#D97706' }} />,
             color:   '#FFFBEB',
-            action:  () => navigate('/warden/complaints'),
+            action:  () => navigate('/admin/complaints'),
             label:   'View Complaints',
           },
           {
@@ -51,7 +51,7 @@ function AdminReportsPage() {
             label:   'View Hostel',
           },
         ].map(item => (
-          <Grid item xs={12} sm={6} key={item.title}>
+          <Grid xs={12} sm={6} key={item.title}>
             <Card sx={{ height:'100%', transition:'transform 0.2s', '&:hover':{ transform:'translateY(-2px)', boxShadow:'0 8px 24px rgba(0,0,0,0.1)' } }}>
               <CardContent sx={{ p:3 }}>
                 <Box sx={{ width:56, height:56, borderRadius:2, bgcolor:item.color, display:'flex', alignItems:'center', justifyContent:'center', mb:2 }}>

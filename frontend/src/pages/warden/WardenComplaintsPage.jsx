@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, Button,
   TextField, InputAdornment, MenuItem, Grid,
-  Alert, Skeleton, Chip, Divider,
+  Alert, Skeleton, Chip,
 } from '@mui/material';
 import {
   SearchOutlined,
@@ -15,6 +15,7 @@ import StatusChip    from '../../components/common/StatusChip';
 import PriorityChip  from '../../components/common/PriorityChip';
 import EmptyState    from '../../components/common/EmptyState';
 import complaintApi  from '../../api/complaintApi';
+import { useAuth } from '../../context/AuthContext';
 import {
   formatRelative,
   getCategoryLabel,
@@ -23,13 +24,11 @@ import {
   PRIORITY_CONFIG,
 } from '../../utils/formatters';
 
-const STATUS_OPTIONS  = ['ALL', ...Object.keys(STATUS_CONFIG)];
-const PRIORITY_OPTIONS = ['ALL', ...Object.keys(PRIORITY_CONFIG)];
-const CATEGORY_OPTIONS = ['ALL', ...Object.keys(CATEGORY_CONFIG)];
-
 function WardenComplaintsPage() {
   const navigate         = useNavigate();
   const [searchParams]   = useSearchParams();
+  const { userRole }     = useAuth();
+  const basePath         = userRole === 'admin' ? '/admin' : '/warden';
 
   const [complaints, setComplaints] = useState([]);
   const [loading,    setLoading]    = useState(true);
@@ -51,7 +50,7 @@ function WardenComplaintsPage() {
         status !== 'ALL' ? status : null
       );
       setComplaints(data);
-    } catch (err) {
+    } catch {
       setError('Unable to load complaints. Please try again.');
     } finally {
       setLoading(false);
@@ -235,7 +234,7 @@ function WardenComplaintsPage() {
               </thead>
               <tbody>
                 {filtered.map((c, i) => {
-                  const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.OTHER;
+                  const catCfg = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG.GENERAL;
                   return (
                     <tr
                       key={c.id}
@@ -248,41 +247,41 @@ function WardenComplaintsPage() {
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = i % 2 === 0 ? '#fff' : '#FAFAFA'}
                     >
                       <td style={{ padding: '11px 16px', fontSize: '0.8125rem', fontWeight: 700, color: '#4F46E5', borderBottom: '1px solid #F1F5F9', whiteSpace: 'nowrap' }}
-                        onClick={() => navigate(`/warden/complaints/${c.id}`)}>
+                        onClick={() => navigate(`${basePath}/complaints/${c.id}`)}>
                         #{c.id}
                       </td>
                       <td style={{ padding: '11px 16px', borderBottom: '1px solid #F1F5F9', maxWidth: 220 }}
-                        onClick={() => navigate(`/warden/complaints/${c.id}`)}>
+                        onClick={() => navigate(`${basePath}/complaints/${c.id}`)}>
                         <Typography variant="body2" sx={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
                           {c.title}
                         </Typography>
                       </td>
                       <td style={{ padding: '11px 16px', borderBottom: '1px solid #F1F5F9' }}
-                        onClick={() => navigate(`/warden/complaints/${c.id}`)}>
+                        onClick={() => navigate(`${basePath}/complaints/${c.id}`)}>
                         <Chip label={getCategoryLabel(c.category)} size="small"
                           sx={{ height: 22, fontSize: '0.6875rem', fontWeight: 600, bgcolor: catCfg.bg, color: catCfg.color }} />
                       </td>
                       <td style={{ padding: '11px 16px', borderBottom: '1px solid #F1F5F9' }}
-                        onClick={() => navigate(`/warden/complaints/${c.id}`)}>
+                        onClick={() => navigate(`${basePath}/complaints/${c.id}`)}>
                         <PriorityChip priority={c.priority} />
                       </td>
                       <td style={{ padding: '11px 16px', borderBottom: '1px solid #F1F5F9' }}
-                        onClick={() => navigate(`/warden/complaints/${c.id}`)}>
+                        onClick={() => navigate(`${basePath}/complaints/${c.id}`)}>
                         <StatusChip status={c.status} />
                       </td>
                       <td style={{ padding: '11px 16px', fontSize: '0.8125rem', color: '#475569', borderBottom: '1px solid #F1F5F9', fontFamily: 'monospace' }}
-                        onClick={() => navigate(`/warden/complaints/${c.id}`)}>
+                        onClick={() => navigate(`${basePath}/complaints/${c.id}`)}>
                         {c.room_id ? `#${c.room_id}` : '—'}
                       </td>
                       <td style={{ padding: '11px 16px', fontSize: '0.8125rem', color: '#64748B', borderBottom: '1px solid #F1F5F9', whiteSpace: 'nowrap' }}
-                        onClick={() => navigate(`/warden/complaints/${c.id}`)}>
+                        onClick={() => navigate(`${basePath}/complaints/${c.id}`)}>
                         {formatRelative(c.created_at)}
                       </td>
                       <td style={{ padding: '11px 16px', borderBottom: '1px solid #F1F5F9' }}>
                         <Button
                           size="small"
                           variant={c.assigned_staff_id ? 'outlined' : 'contained'}
-                          onClick={() => navigate(`/warden/complaints/${c.id}`)}
+                          onClick={() => navigate(`${basePath}/complaints/${c.id}`)}
                           sx={{ fontSize: '0.75rem', py: 0.5, whiteSpace: 'nowrap' }}
                         >
                           {c.assigned_staff_id ? 'Manage' : 'Assign'}

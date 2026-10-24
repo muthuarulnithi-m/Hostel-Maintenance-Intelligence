@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, Button,
-  Alert, Skeleton, Divider, Chip, IconButton, Tooltip,
+  Alert, Skeleton, Divider, Chip, IconButton, Tooltip, ButtonBase,
 } from '@mui/material';
 import {
   NotificationsOutlined,
@@ -20,12 +20,18 @@ import { useAuth }        from '../../context/AuthContext';
 const TYPE_COLORS = {
   COMPLAINT_SUBMITTED:  '#4F46E5',
   COMPLAINT_ASSIGNED:   '#0369A1',
+  COMPLAINT_REASSIGNED: '#7C3AED',
+  COMPLAINT_REQUIRES_ASSIGNMENT: '#D97706',
   COMPLAINT_STARTED:    '#0D9488',
+  COMPLAINT_RESUMED:    '#0F766E',
+  COMPLAINT_ON_HOLD:    '#D97706',
   COMPLAINT_RESOLVED:   '#10B981',
   COMPLAINT_CLOSED:     '#065F46',
+  RATING_REQUEST:       '#7C3AED',
   COMPLAINT_REOPENED:   '#F43F5E',
   COMPLAINT_CANCELLED:  '#94A3B8',
   REPEAT_ALERT:         '#F59E0B',
+  REPEAT_COMPLAINT:     '#F59E0B',
   GENERAL:              '#64748B',
 };
 
@@ -36,6 +42,7 @@ function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
+  const [actionError,   setActionError]   = useState('');
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -43,7 +50,7 @@ function NotificationsPage() {
     try {
       const data = await notificationApi.getAll();
       // Most recent first
-      setNotifications(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      setNotifications([...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch {
       setError('Unable to load notifications. Please try again.');
     } finally {
@@ -56,28 +63,73 @@ function NotificationsPage() {
   // Mark single notification as read
   const handleMarkRead = async (notif) => {
     if (notif.is_read) return;
+    setActionError('');
     try {
-      await notificationApi.markRead(notif.id);
+      const updated = await notificationApi.markRead(notif.id);
+      if (!updated?.is_read) throw new Error('The server did not confirm the read state.');
       setNotifications(prev =>
-        prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n)
+        prev.map(n => n.id === notif.id ? { ...n, ...updated } : n)
       );
+      refreshSharedUnreadCount();
     } catch {
-      // silently fail
+      setActionError('This notification could not be marked as read. Your list has not been changed.');
+    }
+  };
+
+  const handleOpenNotification = async (notif) => {
+    if (!notif.is_read) {
+      try {
+        const updated = await notificationApi.markRead(notif.id);
+        if (!updated?.is_read) throw new Error('The server did not confirm the read state.');
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, ...updated } : n));
+        refreshSharedUnreadCount();
+      } catch {
+        setActionError('This notification could not be marked as read. The complaint was not opened.');
+        return;
+      }
+    }
+    if (notif.complaint_id) {
+      if (notif.notification_type === 'RATING_REQUEST' && userRole === 'student') {
+        navigate(`/student/complaints/${notif.complaint_id}/verify`);
+      } else {
+        navigate(`/${userRole}/complaints/${notif.complaint_id}`);
+      }
     }
   };
 
   // Mark all as read
   const handleMarkAllRead = async () => {
     const unread = notifications.filter(n => !n.is_read);
-    try {
-      await Promise.all(unread.map(n => notificationApi.markRead(n.id)));
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-    } catch {
-      // silently fail
+    if (!unread.length) return;
+    setActionError('');
+    const results = await Promise.allSettled(
+      unread.map(async (notification) => ({
+        id: notification.id,
+        updated: await notificationApi.markRead(notification.id),
+      }))
+    );
+    const confirmed = new Map();
+    results.forEach(result => {
+      if (result.status === 'fulfilled' && result.value.updated?.is_read) {
+        confirmed.set(result.value.id, result.value.updated);
+      }
+    });
+    if (confirmed.size) {
+      setNotifications(prev => prev.map(n => (
+        confirmed.has(n.id) ? { ...n, ...confirmed.get(n.id) } : n
+      )));
+      refreshSharedUnreadCount();
+    }
+    if (confirmed.size !== unread.length) {
+      setActionError('Some notifications could not be marked as read. Only confirmed updates are shown.');
     }
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  const refreshSharedUnreadCount = () => {
+    window.dispatchEvent(new Event('hmis-notifications-changed'));
+  };
 
   return (
     <Box>
@@ -106,6 +158,12 @@ function NotificationsPage() {
         <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}
           action={<Button size="small" color="inherit" onClick={fetchNotifications}>Retry</Button>}>
           {error}
+        </Alert>
+      )}
+
+      {actionError && (
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setActionError('')}>
+          {actionError}
         </Alert>
       )}
 
@@ -139,48 +197,38 @@ function NotificationsPage() {
             return (
               <Box key={notif.id}>
                 {i > 0 && <Divider />}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 2,
-                    px: 2.5,
-                    py: 2,
-                    bgcolor: notif.is_read ? 'transparent' : '#F8FAFF',
-                    transition: 'background 0.2s',
-                    cursor: notif.complaint_id ? 'pointer' : 'default',
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }}
-                  onClick={() => {
-                    handleMarkRead(notif);
-                    if (notif.complaint_id) {
-                      navigate(`/${userRole}/complaints/${notif.complaint_id}`);
-                    }
-                  }}
-                >
-                  {/* Unread indicator */}
-                  <Box sx={{ pt: 0.5, flexShrink: 0 }}>
-                    <CircleOutlined
-                      sx={{
-                        fontSize: 10,
-                        color: notif.is_read ? 'transparent' : color,
-                      }}
-                    />
-                  </Box>
-
-                  {/* Icon */}
-                  <Box
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, px: 2.5, py: 1.5, bgcolor: notif.is_read ? 'transparent' : '#F8FAFF' }}>
+                  <ButtonBase
+                    component="button"
+                    onClick={() => void handleOpenNotification(notif)}
+                    aria-label={`${notif.is_read ? 'Read' : 'Unread'} notification: ${notif.title}${notif.complaint_id ? ', open related complaint' : ''}`}
                     sx={{
-                      width: 36, height: 36, borderRadius: '50%',
-                      bgcolor: `${color}18`, flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flex: 1,
+                      minWidth: 0,
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 2,
+                      p: 0.5,
+                      borderRadius: 1,
+                      textAlign: 'left',
+                      '&:hover': { bgcolor: 'action.hover' },
+                      '&:focus-visible': { outline: '2px solid #4F46E5', outlineOffset: 1 },
                     }}
                   >
-                    <NotificationsOutlined sx={{ fontSize: 18, color }} />
-                  </Box>
-
-                  {/* Content */}
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box aria-hidden="true" sx={{ pt: 0.5, flexShrink: 0 }}>
+                      <CircleOutlined sx={{ fontSize: 10, color: notif.is_read ? 'transparent' : color }} />
+                    </Box>
+                    <Box
+                      aria-hidden="true"
+                      sx={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        bgcolor: `${color}18`, flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <NotificationsOutlined sx={{ fontSize: 18, color }} />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
                       <Typography
                         variant="body2"
@@ -202,13 +250,22 @@ function NotificationsPage() {
                     <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 0.25 }}>
                       {formatRelative(notif.created_at)}
                     </Typography>
-                  </Box>
+                    {notif.complaint_id && (
+                      <Chip
+                        label={`Complaint #${notif.complaint_id}`}
+                        size="small"
+                        variant="outlined"
+                        sx={{ mt: 0.75, height: 22, fontSize: '0.68rem', borderColor: '#D9DBE3' }}
+                      />
+                    )}
+                    </Box>
+                  </ButtonBase>
 
                   {/* Actions */}
                   <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
                     {notif.complaint_id && (
                       <Tooltip title="View complaint" arrow>
-                        <IconButton size="small" sx={{ color: 'text.disabled' }}>
+                        <IconButton size="small" aria-label={`Open complaint ${notif.complaint_id}`} sx={{ color: 'text.disabled' }} onClick={() => void handleOpenNotification(notif)}>
                           <OpenInNewOutlined sx={{ fontSize: 16 }} />
                         </IconButton>
                       </Tooltip>

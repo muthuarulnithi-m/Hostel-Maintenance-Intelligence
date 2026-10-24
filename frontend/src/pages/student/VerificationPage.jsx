@@ -207,7 +207,7 @@ function VerificationPage() {
     );
   }
 
-  const catConfig = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.OTHER;
+  const catConfig = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.GENERAL;
 
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto' }}>
@@ -544,7 +544,7 @@ function VerificationPage() {
 }
 
 function getCategoryEmoji(category) {
-  const map = { GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧', CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌' };
+  const map = { GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧', CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌' };
   return map[category] || '📋';
 }
 

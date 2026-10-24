@@ -53,10 +53,12 @@ export const CATEGORY_CONFIG = {
   GENERAL:     { label: 'General',     color: '#64748B', bg: '#F1F5F9' },
   ELECTRICAL:  { label: 'Electrical',  color: '#D97706', bg: '#FFFBEB' },
   PLUMBING:    { label: 'Plumbing',    color: '#0369A1', bg: '#EFF6FF' },
-  CARPENTRY:   { label: 'Carpentry',   color: '#92400E', bg: '#FEF3C7' },
+  CIVIL:       { label: 'Civil',       color: '#92400E', bg: '#FEF3C7' },
+  FURNITURE:   { label: 'Furniture',   color: '#7C3AED', bg: '#F5F3FF' },
+  SANITATION:  { label: 'Sanitation',  color: '#0F766E', bg: '#F0FDFA' },
   CLEANING:    { label: 'Cleaning',    color: '#065F46', bg: '#ECFDF5' },
-  INTERNET:    { label: 'Internet',    color: '#6D28D9', bg: '#EDE9FE' },
-  OTHER:       { label: 'Other',       color: '#475569', bg: '#F8FAFC' },
+  NETWORK:     { label: 'Network',     color: '#6D28D9', bg: '#EDE9FE' },
+  SECURITY:    { label: 'Security',    color: '#BE123C', bg: '#FFF1F2' },
 };
 
 /**
@@ -89,7 +91,7 @@ export const PRIORITY_CONFIG = {
   LOW:      { label: 'Low',      color: '#64748B', bg: '#F8FAFC' },
   MEDIUM:   { label: 'Medium',   color: '#92400E', bg: '#FFFBEB' },
   HIGH:     { label: 'High',     color: '#C2410C', bg: '#FFF7ED' },
-  CRITICAL: { label: 'Critical', color: '#9F1239', bg: '#FFF1F2' },
+  URGENT:   { label: 'Urgent',   color: '#9F1239', bg: '#FFF1F2' },
 };
 
 /**

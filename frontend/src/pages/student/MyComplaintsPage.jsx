@@ -103,12 +103,14 @@ function MyComplaintsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               sx={{ minWidth: 220, flex: 1 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchOutlined sx={{ fontSize: 18, color: 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
           </Box>

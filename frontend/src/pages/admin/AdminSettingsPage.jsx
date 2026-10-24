@@ -12,7 +12,7 @@ function AdminSettingsPage() {
     { label: 'Frontend',      value: 'React + Vite + MUI' },
     { label: 'Backend',       value: 'FastAPI + PostgreSQL' },
     { label: 'Auth',          value: 'JWT (HS256, 60 min expiry)' },
-    { label: 'API Base URL',  value: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000' },
+    { label: 'API Base URL',  value: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://127.0.0.1:8000' : 'Not configured') },
     { label: 'Environment',   value: import.meta.env.MODE || 'development' },
   ];
 
@@ -30,7 +30,7 @@ function AdminSettingsPage() {
 
       <Grid container spacing={2.5}>
         {/* System Info */}
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2 }}>
@@ -55,7 +55,7 @@ function AdminSettingsPage() {
         </Grid>
 
         {/* Security info */}
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2 }}>

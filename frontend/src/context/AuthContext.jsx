@@ -45,18 +45,26 @@ export function AuthProvider({ children }) {
     // Step 2 — store token immediately so axios interceptor can use it
     localStorage.setItem('access_token', access_token);
 
-    // Step 3 — fetch user profile using that token
-    const userData = await authApi.getMe();
+    try {
+      // Step 3 — fetch user profile using that token
+      const userData = await authApi.getMe();
 
-    // Step 4 — persist user
-    localStorage.setItem('user', JSON.stringify(userData));
+      // Step 4 — persist user
+      localStorage.setItem('user', JSON.stringify(userData));
 
-    // Step 5 — update state
-    setToken(access_token);
-    setUser(userData);
+      // Step 5 — update state
+      setToken(access_token);
+      setUser(userData);
 
-    // Return user so LoginPage can redirect based on role
-    return userData;
+      // Return user so LoginPage can redirect based on role
+      return userData;
+    } catch (error) {
+      // Do not leave a token behind if profile loading fails; otherwise a
+      // later page refresh can restore a partially authenticated session.
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      throw error;
+    }
   }, []);
 
   /**
@@ -68,6 +76,11 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
+  }, []);
+
+  const updateUser = useCallback((updatedUser) => {
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
   }, []);
 
   // ── Derived helpers ──────────────────────────────────────────────────────
@@ -84,6 +97,7 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     userRole,       // lowercase: 'student' | 'staff' | 'warden' | 'admin'
     login,          // async (email, password) => userData
+    updateUser,     // persist a profile update without reloading the app
     logout,
   };
 

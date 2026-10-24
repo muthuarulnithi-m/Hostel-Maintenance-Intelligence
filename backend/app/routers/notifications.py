@@ -102,9 +102,11 @@ def mark_notification_read(
     ),
 ):
 
-    notification = db.get(
-        Notification,
-        notification_id,
+    notification = db.scalar(
+        select(Notification).where(
+            Notification.id == notification_id,
+            Notification.user_id == current_user.id,
+        )
     )
 
     if not notification:
@@ -114,18 +116,9 @@ def mark_notification_read(
             detail="Notification not found",
         )
 
-    if notification.user_id != current_user.id:
-
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You cannot modify this notification",
-        )
-
-    notification.is_read = True
-
-    notification.read_at = (
-        datetime.now(timezone.utc)
-    )
+    if not notification.is_read:
+        notification.is_read = True
+        notification.read_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(notification)

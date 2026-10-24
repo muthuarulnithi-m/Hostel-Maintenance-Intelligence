@@ -1,90 +1,134 @@
 import React, { useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Avatar,
-  Grid, Divider, Chip, Button, Alert,
-  TextField, CircularProgress, Snackbar,
-  IconButton, InputAdornment,
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  IconButton,
+  InputAdornment,
+  Snackbar,
+  TextField,
+  Typography,
 } from '@mui/material';
 import {
-  PersonOutlined, EmailOutlined, PhoneOutlined,
-  CalendarTodayOutlined, BadgeOutlined,
-  LogoutOutlined, EditOutlined, SaveOutlined, CloseOutlined,
-  VisibilityOutlined, VisibilityOffOutlined,
-  CheckCircleOutlined, LockOutlined,
+  CheckCircleOutlined,
+  EditOutlined,
+  LockOutlined,
+  LogoutOutlined,
+  PersonOutlined,
+  SaveOutlined,
+  SecurityOutlined,
+  VisibilityOffOutlined,
+  VisibilityOutlined,
 } from '@mui/icons-material';
-import { useNavigate }    from 'react-router-dom';
-import { useAuth }        from '../../context/AuthContext';
-import PageHeader         from '../../components/common/PageHeader';
-import { formatDate }     from '../../utils/formatters';
-import axiosInstance      from '../../api/axios';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import PageHeader from '../../components/common/PageHeader';
+import { formatDate } from '../../utils/formatters';
+import axiosInstance from '../../api/axios';
 
 const ROLE_CONFIG = {
-  student: { label: 'Student',       color: '#4F46E5', bg: '#EEF2FF',  gradient: 'linear-gradient(135deg,#4F46E5,#7C3AED)' },
-  staff:   { label: 'Maintenance',   color: '#0D9488', bg: '#F0FDFA',  gradient: 'linear-gradient(135deg,#0D9488,#059669)' },
-  warden:  { label: 'Warden',        color: '#D97706', bg: '#FFFBEB',  gradient: 'linear-gradient(135deg,#D97706,#B45309)' },
-  admin:   { label: 'Administrator', color: '#DC2626', bg: '#FEF2F2',  gradient: 'linear-gradient(135deg,#DC2626,#9B1C1C)' },
+  student: { label: 'Student', color: '#5B4AE6', bg: '#F1EFFF' },
+  staff: { label: 'Maintenance Staff', color: '#0F766E', bg: '#E9F8F5' },
+  warden: { label: 'Warden', color: '#A16207', bg: '#FFF7E5' },
+  admin: { label: 'Administrator', color: '#B42318', bg: '#FFF0EE' },
 };
 
-// ── Reusable info row ────────────────────────────────────────────────────────
-function InfoRow({ icon, label, value, last }) {
+const panelSx = {
+  border: '1px solid #E7E7EE',
+  borderRadius: 3,
+  boxShadow: '0 2px 10px rgba(24, 24, 40, 0.025)',
+  bgcolor: '#fff',
+};
+
+function SettingsNavItem({ selected, icon, children, onClick }) {
   return (
-    <>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.75 }}>
-        <Box
-          sx={{
-            width: 38, height: 38, borderRadius: 2,
-            bgcolor: '#F8FAFC', border: '1px solid #E2E8F0',
-            flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          {React.cloneElement(icon, { sx: { fontSize: 17, color: '#64748B' } })}
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', mb: 0.15 }}>
-            {label}
-          </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 500, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {value || '—'}
-          </Typography>
-        </Box>
-      </Box>
-      {!last && <Divider sx={{ borderColor: '#F1F5F9' }} />}
-    </>
+    <Button
+      fullWidth
+      color="inherit"
+      onClick={onClick}
+      aria-current={selected ? 'page' : undefined}
+      startIcon={icon}
+      sx={{
+        justifyContent: 'flex-start',
+        minHeight: 40,
+        px: 1.25,
+        borderRadius: 1.5,
+        color: selected ? '#5747D9' : '#5E606A',
+        bgcolor: selected ? '#F2F0FF' : 'transparent',
+        fontWeight: selected ? 600 : 400,
+        fontSize: '0.875rem',
+        '&:hover': { bgcolor: selected ? '#ECE9FF' : '#F7F7FA' },
+        '& .MuiButton-startIcon': { color: 'inherit', mr: 1 },
+      }}
+    >
+      {children}
+    </Button>
   );
 }
 
-// ── Password field helper ────────────────────────────────────────────────────
-function PasswordField({ label, value, onChange, error, helperText, show, onToggle }) {
+function DetailField({ label, value, editable = false, children }) {
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        component="div"
+        sx={{ color: '#737581', fontSize: '0.78rem', mb: 0.65, fontWeight: 500 }}
+      >
+        {label}
+      </Typography>
+      {editable ? children : (
+        <Box
+          sx={{
+            minHeight: 42,
+            px: 1.4,
+            display: 'flex',
+            alignItems: 'center',
+            border: '1px solid #E6E6EC',
+            borderRadius: 1.5,
+            color: value ? '#292A31' : '#999BA4',
+            fontSize: '0.875rem',
+            overflowWrap: 'anywhere',
+            bgcolor: '#fff',
+          }}
+        >
+          {value || 'Not provided'}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+function PasswordField({ label, value, onChange, error, show, onToggle }) {
   return (
     <TextField
-      fullWidth size="small" label={label}
+      fullWidth
+      label={label}
       type={show ? 'text' : 'password'}
       value={value}
       onChange={onChange}
-      error={!!error}
-      helperText={error || helperText}
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          borderRadius: 1.5,
-          '&:hover fieldset': { borderColor: '#818cf8' },
-          '&.Mui-focused fieldset': { borderColor: '#4F46E5', borderWidth: 2 },
-        },
-      }}
+      error={Boolean(error)}
+      helperText={error || ' '}
+      autoComplete={label === 'Current Password' ? 'current-password' : 'new-password'}
+      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
       slotProps={{
         input: {
           startAdornment: (
             <InputAdornment position="start">
-              <LockOutlined sx={{ fontSize: 16, color: '#94A3B8' }} />
+              <LockOutlined sx={{ color: '#888A94', fontSize: 19 }} />
             </InputAdornment>
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton onClick={onToggle} edge="end" size="small" tabIndex={-1}
-                sx={{ color: '#94A3B8', '&:hover': { color: '#4F46E5' } }}>
-                {show
-                  ? <VisibilityOffOutlined sx={{ fontSize: 16 }} />
-                  : <VisibilityOutlined   sx={{ fontSize: 16 }} />
-                }
+              <IconButton
+                aria-label={show ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+                onClick={onToggle}
+                edge="end"
+              >
+                {show ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
               </IconButton>
             </InputAdornment>
           ),
@@ -95,458 +139,372 @@ function PasswordField({ label, value, onChange, error, helperText, show, onTogg
 }
 
 function ProfilePage() {
-  const { user, userRole, logout } = useAuth();
+  const { user, userRole, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-
   const roleCfg = ROLE_CONFIG[userRole] || ROLE_CONFIG.student;
   const initials = user?.name
-    ? user.name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
+    ?.trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || '?';
+  const nameParts = (user?.name || '').trim().split(/\s+/).filter(Boolean);
 
-  const [editing,  setEditing]  = useState(false);
-  const [form,     setForm]     = useState({ name: '', phone: '' });
-  const [pwForm,   setPwForm]   = useState({ current_password: '', new_password: '', confirm: '' });
-  const [saving,   setSaving]   = useState(false);
-  const [error,    setError]    = useState('');
-  const [fieldErr, setFieldErr] = useState({});
+  const [section, setSection] = useState('profile');
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ name: user?.name || '', phone: user?.phone || '' });
+  const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
+  const [showPassword, setShowPassword] = useState({ current: false, next: false, confirm: false });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
-  const [showCurrentPass, setShowCurrentPass] = useState(false);
-  const [showNewPass,     setShowNewPass]     = useState(false);
-  const [showConfirmPass, setShowConfirmPass] = useState(false);
-  const [showLogout, setShowLogout] = useState(false);
-
-  const showSnack = (msg) => setSnackbar({ open: true, message: msg });
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const startEdit = () => {
     setForm({ name: user?.name || '', phone: user?.phone || '' });
-    setPwForm({ current_password: '', new_password: '', confirm: '' });
+    setFieldErrors({});
     setError('');
-    setFieldErr({});
     setEditing(true);
   };
 
-  const validateEdit = () => {
-    const e = {};
-    if (!form.name.trim()) e.name = 'Name is required.';
-    if (pwForm.new_password) {
-      if (!pwForm.current_password) e.current_password = 'Current password required to set a new one.';
-      if (pwForm.new_password.length < 8) e.new_password = 'Must be at least 8 characters.';
-      if (pwForm.new_password !== pwForm.confirm) e.confirm = 'Passwords do not match.';
-    }
-    setFieldErr(e);
-    return Object.keys(e).length === 0;
+  const cancelEdit = () => {
+    setEditing(false);
+    setError('');
+    setFieldErrors({});
   };
 
-  const handleSave = async () => {
-    if (!validateEdit()) return;
+  const saveProfile = async () => {
+    const nextErrors = {};
+    const cleanName = form.name.trim();
+    if (cleanName.length < 2 || cleanName.length > 100) {
+      nextErrors.name = 'Enter a name between 2 and 100 characters.';
+    }
+    const cleanPhone = form.phone.trim();
+    if (cleanPhone.length > 20) nextErrors.phone = 'Phone number must be 20 characters or fewer.';
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+
     setSaving(true);
     setError('');
     try {
-      const payload = { name: form.name.trim(), phone: form.phone.trim() || undefined };
-      if (pwForm.new_password) {
-        payload.current_password = pwForm.current_password;
-        payload.new_password     = pwForm.new_password;
-      }
-      const response = await axiosInstance.patch('/users/me', payload);
-      const updatedUser = response.data;
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      showSnack('Profile updated successfully!');
-      setTimeout(() => window.location.reload(), 800);
+      const { data } = await axiosInstance.patch('/users/me', {
+        name: cleanName,
+        phone: cleanPhone || null,
+      });
+      updateUser(data);
+      setEditing(false);
+      setSnackbar({ open: true, message: 'Profile information saved.' });
     } catch (err) {
       const detail = err.response?.data?.detail;
-      if (err.response?.status === 400) {
-        setError(typeof detail === 'string' ? detail : 'Current password is incorrect.');
-      } else {
-        setError(typeof detail === 'string' ? detail : 'Failed to update profile.');
-      }
+      setError(typeof detail === 'string' ? detail : 'Unable to save profile changes. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const savePassword = async () => {
+    const nextErrors = {};
+    if (!passwords.current) nextErrors.current = 'Enter your current password.';
+    if (passwords.next.length < 8 || passwords.next.length > 72) {
+      nextErrors.next = 'Use a password between 8 and 72 characters.';
+    }
+    if (passwords.next !== passwords.confirm) nextErrors.confirm = 'Passwords do not match.';
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+
+    setSaving(true);
+    setError('');
+    try {
+      const { data } = await axiosInstance.patch('/users/me', {
+        current_password: passwords.current,
+        new_password: passwords.next,
+      });
+      updateUser(data);
+      setPasswords({ current: '', next: '', confirm: '' });
+      setFieldErrors({});
+      setSnackbar({ open: true, message: 'Password changed successfully.' });
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Unable to change password. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
-    <Box sx={{ maxWidth: 760, mx: 'auto' }}>
+    <Box sx={{ maxWidth: 1180, mx: 'auto' }}>
       <PageHeader
-        title="My Profile"
-        subtitle="Manage your account information and security settings."
-        action={
-          !editing ? (
-            <Button
-              variant="contained" startIcon={<EditOutlined />}
-              onClick={startEdit} size="small"
-              sx={{
-                borderRadius: 1.5,
-                background: 'linear-gradient(135deg,#4F46E5,#6D28D9)',
-                boxShadow: '0 2px 8px rgba(79,70,229,0.35)',
-                '&:hover': { background: 'linear-gradient(135deg,#4338CA,#5B21B6)' },
-              }}
-            >
-              Edit Profile
-            </Button>
-          ) : (
-            <Button variant="outlined" startIcon={<CloseOutlined />}
-              onClick={() => setEditing(false)} size="small" color="inherit"
-              sx={{ borderRadius: 1.5 }}>
-              Cancel
-            </Button>
-          )
-        }
+        title="Profile Settings"
+        subtitle="Manage your account information and security preferences."
       />
 
-      <Grid container spacing={2.5}>
-
-        {/* ── Left: avatar card ──────────────────────────────────────────── */}
-        <Grid xs={12} sm={4}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              overflow: 'hidden',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
-              border: '1px solid #E2E8F0',
-            }}
-          >
-            {/* Gradient banner */}
-            <Box
-              sx={{
-                height: 72,
-                background: roleCfg.gradient,
-                opacity: 0.9,
-              }}
-            />
-
-            <CardContent sx={{ pt: 0, pb: 3, px: 3, textAlign: 'center' }}>
-              {/* Avatar overlapping banner */}
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: '-36px', mb: 1.5 }}>
-                <Avatar
-                  sx={{
-                    width: 72, height: 72,
-                    background: roleCfg.gradient,
-                    fontSize: '1.5rem', fontWeight: 800,
-                    border: '3px solid #fff',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                  }}
-                >
-                  {initials}
-                </Avatar>
-              </Box>
-
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#0F172A' }}>
-                {user?.name || '—'}
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#64748B', display: 'block', mb: 1.5 }}>
-                {user?.email}
-              </Typography>
-
-              <Chip
-                label={roleCfg.label}
-                size="small"
-                sx={{
-                  bgcolor: roleCfg.bg,
-                  color: roleCfg.color,
-                  fontWeight: 700,
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.02em',
-                  border: `1px solid ${roleCfg.color}30`,
-                  mb: 2,
-                }}
-              />
-
-              <Divider sx={{ mb: 2, borderColor: '#F1F5F9' }} />
-
-              {/* Status badge */}
-              <Box
-                sx={{
-                  display: 'inline-flex', alignItems: 'center', gap: 0.75,
-                  px: 1.5, py: 0.5, borderRadius: 10,
-                  bgcolor: user?.is_active ? '#DCFCE7' : '#FEE2E2',
-                  border: `1px solid ${user?.is_active ? '#BBF7D0' : '#FECACA'}`,
-                }}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '176px minmax(0, 1fr)' },
+          gap: { xs: 2, md: 2.5 },
+          alignItems: 'start',
+        }}
+      >
+        <Card sx={panelSx}>
+          <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+            <Box component="nav" aria-label="Profile settings">
+              <SettingsNavItem
+                selected={section === 'profile'}
+                icon={<PersonOutlined fontSize="small" />}
+                onClick={() => { setSection('profile'); setError(''); setEditing(false); }}
               >
+                Profile
+              </SettingsNavItem>
+              <SettingsNavItem
+                selected={section === 'security'}
+                icon={<SecurityOutlined fontSize="small" />}
+                onClick={() => { setSection('security'); setError(''); setEditing(false); }}
+              >
+                Security
+              </SettingsNavItem>
+            </Box>
+            <Divider sx={{ my: 1.25, borderColor: '#EEEEF2' }} />
+            {!confirmLogout ? (
+              <Button
+                fullWidth
+                color="error"
+                startIcon={<LogoutOutlined />}
+                onClick={() => setConfirmLogout(true)}
+                sx={{ justifyContent: 'flex-start', px: 1.25, minHeight: 40, borderRadius: 1.5 }}
+              >
+                Sign Out
+              </Button>
+            ) : (
+              <Box sx={{ p: 1.25 }}>
+                <Typography sx={{ fontSize: '0.8rem', color: '#4B4D57', mb: 1.25 }}>
+                  Sign out of this device?
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button size="small" onClick={() => setConfirmLogout(false)}>Cancel</Button>
+                  <Button size="small" color="error" onClick={handleLogout}>Sign Out</Button>
+                </Box>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card sx={panelSx}>
+          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+            {section === 'profile' ? (
+              <>
+                <Typography variant="h6" sx={{ fontWeight: 650, color: '#252630', mb: 2.25 }}>
+                  My Profile
+                </Typography>
+
                 <Box
                   sx={{
-                    width: 7, height: 7, borderRadius: '50%',
-                    bgcolor: user?.is_active ? '#16A34A' : '#DC2626',
-                    boxShadow: user?.is_active
-                      ? '0 0 6px rgba(22,163,74,0.6)'
-                      : '0 0 6px rgba(220,38,38,0.6)',
-                    animation: user?.is_active ? 'pulse 2s infinite' : 'none',
-                    '@keyframes pulse': {
-                      '0%,100%': { opacity: 1 },
-                      '50%': { opacity: 0.5 },
-                    },
-                  }}
-                />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 700, fontSize: '0.7rem',
-                    color: user?.is_active ? '#16A34A' : '#DC2626',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.75,
+                    p: { xs: 1.5, sm: 1.75 },
+                    border: '1px solid #E8E8ED',
+                    borderRadius: 2.5,
+                    mb: 1.75,
                   }}
                 >
-                  {user?.is_active ? 'Active' : 'Inactive'}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* ── Right: info + edit ─────────────────────────────────────────── */}
-        <Grid xs={12} sm={8}>
-
-          {/* ── View mode ─────────────────────────────────────────────────── */}
-          {!editing && (
-            <Card
-              sx={{
-                mb: 2.5, borderRadius: 3,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
-                border: '1px solid #E2E8F0',
-              }}
-            >
-              <CardContent sx={{ p: 0 }}>
-                <Box sx={{ px: 2.5, pt: 2.5, pb: 1 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', letterSpacing: '0.01em' }}>
-                    Account Information
-                  </Typography>
-                </Box>
-                <Divider sx={{ borderColor: '#F1F5F9' }} />
-                <Box sx={{ px: 2.5 }}>
-                  <InfoRow icon={<PersonOutlined />}        label="Full Name"     value={user?.name} />
-                  <InfoRow icon={<EmailOutlined />}         label="Email Address" value={user?.email} />
-                  <InfoRow icon={<PhoneOutlined />}         label="Phone Number"  value={user?.phone || 'Not provided'} />
-                  <InfoRow icon={<BadgeOutlined />}         label="Role"          value={roleCfg.label} />
-                  <InfoRow icon={<CalendarTodayOutlined />} label="Member Since"  value={formatDate(user?.created_at)} last />
-                </Box>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* ── Edit mode ─────────────────────────────────────────────────── */}
-          {editing && (
-            <Card
-              sx={{
-                mb: 2.5, borderRadius: 3,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
-                border: '1px solid #E2E8F0',
-              }}
-            >
-              <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 2 }}>
-                  Edit Profile
-                </Typography>
-
-                {error && (
-                  <Alert severity="error" sx={{ mb: 2, borderRadius: 2, fontSize: '0.8125rem' }}>
-                    {error}
-                  </Alert>
-                )}
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {/* Basic info */}
-                  <TextField
-                    fullWidth size="small" label="Full Name *"
-                    value={form.name}
-                    onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                    error={!!fieldErr.name} helperText={fieldErr.name}
+                  <Avatar
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 1.5,
-                        '&:hover fieldset': { borderColor: '#818cf8' },
-                        '&.Mui-focused fieldset': { borderColor: '#4F46E5', borderWidth: 2 },
-                      },
-                    }}
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PersonOutlined sx={{ fontSize: 16, color: '#94A3B8' }} />
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-                  <TextField
-                    fullWidth size="small" label="Phone Number"
-                    value={form.phone}
-                    onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                    helperText="Optional"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 1.5,
-                        '&:hover fieldset': { borderColor: '#818cf8' },
-                        '&.Mui-focused fieldset': { borderColor: '#4F46E5', borderWidth: 2 },
-                      },
-                    }}
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PhoneOutlined sx={{ fontSize: 16, color: '#94A3B8' }} />
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-
-                  {/* Password section */}
-                  <Box
-                    sx={{
-                      p: 2, borderRadius: 2,
-                      bgcolor: '#F8FAFC',
-                      border: '1px solid #E2E8F0',
+                      width: 68,
+                      height: 68,
+                      bgcolor: roleCfg.bg,
+                      color: roleCfg.color,
+                      fontWeight: 700,
+                      fontSize: '1.3rem',
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontWeight: 700, color: '#64748B',
-                        fontSize: '0.7rem', letterSpacing: '0.06em',
-                        textTransform: 'uppercase', display: 'block', mb: 1.5,
-                      }}
-                    >
-                      🔐 Change Password — optional
+                    {initials}
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 600, color: '#292A31' }}>
+                      {user?.name || 'Account holder'}
                     </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Typography sx={{ color: '#767883', fontSize: '0.82rem', overflowWrap: 'anywhere' }}>
+                      {user?.email || 'Email unavailable'}
+                    </Typography>
+                    <Chip
+                      label={roleCfg.label}
+                      size="small"
+                      sx={{ mt: 0.75, bgcolor: roleCfg.bg, color: roleCfg.color, fontWeight: 600, height: 24 }}
+                    />
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditOutlined />}
+                    onClick={editing ? cancelEdit : startEdit}
+                    sx={{ borderColor: '#E6E6EC', color: '#555762', borderRadius: 1.5, flexShrink: 0 }}
+                  >
+                    {editing ? 'Cancel' : 'Edit'}
+                  </Button>
+                </Box>
+
+                <Card variant="outlined" sx={{ borderColor: '#E8E8ED', borderRadius: 2.5, mb: 1.75, boxShadow: 'none' }}>
+                  <CardContent sx={{ p: { xs: 1.75, sm: 2 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                      <Typography sx={{ fontWeight: 600, color: '#30313A' }}>Personal Information</Typography>
+                      {!editing && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<EditOutlined />}
+                          onClick={startEdit}
+                          sx={{ borderColor: '#E6E6EC', color: '#555762', borderRadius: 1.5 }}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                    </Box>
+                    {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 1.5 }}>{error}</Alert>}
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
+                      {editing ? (
+                        <>
+                          <TextField
+                            fullWidth
+                            label="Full Name"
+                            value={form.name}
+                            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                            error={Boolean(fieldErrors.name)}
+                            helperText={fieldErrors.name || ' '}
+                            autoComplete="name"
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Phone Number"
+                            value={form.phone}
+                            onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
+                            error={Boolean(fieldErrors.phone)}
+                            helperText={fieldErrors.phone || ' '}
+                            autoComplete="tel"
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+                          />
+                          <DetailField label="Email Address" value={user?.email} />
+                          <DetailField label="Account Role" value={roleCfg.label} />
+                        </>
+                      ) : (
+                        <>
+                          <DetailField label="First Name" value={nameParts[0]} />
+                          <DetailField label="Last Name" value={nameParts.slice(1).join(' ')} />
+                          <DetailField label="Email Address" value={user?.email} />
+                          <DetailField label="Phone Number" value={user?.phone} />
+                        </>
+                      )}
+                    </Box>
+                    {editing && (
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
+                        <Button onClick={cancelEdit} disabled={saving} sx={{ color: '#62636D' }}>Cancel</Button>
+                        <Button
+                          variant="contained"
+                          onClick={saveProfile}
+                          disabled={saving}
+                          startIcon={<SaveOutlined />}
+                          sx={{ bgcolor: '#5948DD', borderRadius: 1.5, textTransform: 'none', '&:hover': { bgcolor: '#4939C5' } }}
+                        >
+                          {saving ? 'Saving…' : 'Save Changes'}
+                        </Button>
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card variant="outlined" sx={{ borderColor: '#E8E8ED', borderRadius: 2.5, boxShadow: 'none' }}>
+                  <CardContent sx={{ p: { xs: 1.75, sm: 2 } }}>
+                    <Typography sx={{ fontWeight: 600, color: '#30313A', mb: 2 }}>Account Details</Typography>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
+                      <DetailField label="Account Role" value={roleCfg.label} />
+                      <DetailField label="Account Status" value={user?.is_active ? 'Active' : 'Inactive'} />
+                      <Box sx={{ gridColumn: { xs: 'auto', sm: '1 / -1' } }}>
+                        <DetailField label="Member Since" value={formatDate(user?.created_at)} />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <>
+                <Typography variant="h6" sx={{ fontWeight: 650, color: '#252630', mb: 0.5 }}>
+                  Security
+                </Typography>
+                <Typography sx={{ color: '#777984', fontSize: '0.875rem', mb: 2.25 }}>
+                  Change your password to keep your account secure.
+                </Typography>
+                <Card variant="outlined" sx={{ borderColor: '#E8E8ED', borderRadius: 2.5, boxShadow: 'none' }}>
+                  <CardContent sx={{ p: { xs: 1.75, sm: 2 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <LockOutlined sx={{ fontSize: 19, color: '#6454DE' }} />
+                      <Typography sx={{ fontWeight: 600, color: '#30313A' }}>Change Password</Typography>
+                    </Box>
+                    {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 1.5 }}>{error}</Alert>}
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
                       <PasswordField
                         label="Current Password"
-                        value={pwForm.current_password}
-                        onChange={e => setPwForm(p => ({ ...p, current_password: e.target.value }))}
-                        error={fieldErr.current_password}
-                        show={showCurrentPass}
-                        onToggle={() => setShowCurrentPass(p => !p)}
+                        value={passwords.current}
+                        onChange={(event) => setPasswords((current) => ({ ...current, current: event.target.value }))}
+                        error={fieldErrors.current}
+                        show={showPassword.current}
+                        onToggle={() => setShowPassword((current) => ({ ...current, current: !current.current }))}
                       />
+                      <Box sx={{ display: { xs: 'none', sm: 'block' } }} />
                       <PasswordField
                         label="New Password"
-                        value={pwForm.new_password}
-                        onChange={e => setPwForm(p => ({ ...p, new_password: e.target.value }))}
-                        error={fieldErr.new_password}
-                        helperText="Minimum 8 characters"
-                        show={showNewPass}
-                        onToggle={() => setShowNewPass(p => !p)}
+                        value={passwords.next}
+                        onChange={(event) => setPasswords((current) => ({ ...current, next: event.target.value }))}
+                        error={fieldErrors.next}
+                        show={showPassword.next}
+                        onToggle={() => setShowPassword((current) => ({ ...current, next: !current.next }))}
                       />
                       <PasswordField
                         label="Confirm New Password"
-                        value={pwForm.confirm}
-                        onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
-                        error={fieldErr.confirm}
-                        show={showConfirmPass}
-                        onToggle={() => setShowConfirmPass(p => !p)}
+                        value={passwords.confirm}
+                        onChange={(event) => setPasswords((current) => ({ ...current, confirm: event.target.value }))}
+                        error={fieldErrors.confirm}
+                        show={showPassword.confirm}
+                        onToggle={() => setShowPassword((current) => ({ ...current, confirm: !current.confirm }))}
                       />
                     </Box>
-                  </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                      <Button
+                        variant="contained"
+                        onClick={savePassword}
+                        disabled={saving}
+                        startIcon={<SaveOutlined />}
+                        sx={{ bgcolor: '#5948DD', borderRadius: 1.5, textTransform: 'none', '&:hover': { bgcolor: '#4939C5' } }}
+                      >
+                        {saving ? 'Saving…' : 'Update Password'}
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
 
-                  <Button
-                    variant="contained"
-                    onClick={handleSave}
-                    disabled={saving}
-                    startIcon={
-                      saving
-                        ? <CircularProgress size={15} color="inherit" />
-                        : <SaveOutlined />
-                    }
-                    sx={{
-                      borderRadius: 1.75, py: 1.125,
-                      background: 'linear-gradient(135deg,#4F46E5,#6D28D9)',
-                      boxShadow: '0 3px 12px rgba(79,70,229,0.35)',
-                      fontWeight: 600,
-                      '&:hover': {
-                        background: 'linear-gradient(135deg,#4338CA,#5B21B6)',
-                        boxShadow: '0 5px 16px rgba(79,70,229,0.45)',
-                        transform: 'translateY(-1px)',
-                      },
-                      '&:active': { transform: 'translateY(0)' },
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {saving ? 'Saving…' : 'Save Changes'}
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* ── Account actions ───────────────────────────────────────────── */}
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
-              border: '1px solid #E2E8F0',
-            }}
-          >
-            <CardContent sx={{ p: 2.5 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 2 }}>
-                Account Actions
-              </Typography>
-
-              {!showLogout ? (
-                <Button
-                  variant="outlined" color="error"
-                  startIcon={<LogoutOutlined />}
-                  onClick={() => setShowLogout(true)}
-                  fullWidth
-                  sx={{
-                    borderRadius: 1.5, py: 1,
-                    fontWeight: 600,
-                    borderColor: '#FECACA',
-                    color: '#DC2626',
-                    bgcolor: '#FEF2F2',
-                    '&:hover': {
-                      bgcolor: '#FEE2E2',
-                      borderColor: '#FCA5A5',
-                    },
-                  }}
-                >
-                  Sign Out
-                </Button>
-              ) : (
-                <Box
-                  sx={{
-                    p: 2, borderRadius: 2,
-                    bgcolor: '#FFFBEB',
-                    border: '1px solid #FDE68A',
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400E', mb: 1.5 }}>
-                    Are you sure you want to sign out?
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      size="small" variant="outlined"
-                      onClick={() => setShowLogout(false)}
-                      sx={{ borderRadius: 1.5, flex: 1, borderColor: '#D97706', color: '#D97706', '&:hover': { bgcolor: '#FEF3C7' } }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      size="small" variant="contained" color="error"
-                      onClick={handleLogout}
-                      startIcon={<LogoutOutlined />}
-                      sx={{ borderRadius: 1.5, flex: 1, fontWeight: 600 }}
-                    >
-                      Sign Out
-                    </Button>
-                  </Box>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-
-        </Grid>
-      </Grid>
-
-      {/* ── Success snackbar ─────────────────────────────────────────────── */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={() => setSnackbar(p => ({ ...p, open: false }))}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
-          onClose={() => setSnackbar(p => ({ ...p, open: false }))}
+          onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
           severity="success"
           icon={<CheckCircleOutlined fontSize="inherit" />}
-          sx={{ borderRadius: 2, fontWeight: 500 }}
+          sx={{ borderRadius: 1.5 }}
         >
           {snackbar.message}
         </Alert>

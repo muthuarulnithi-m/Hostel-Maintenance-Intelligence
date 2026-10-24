@@ -162,10 +162,10 @@ function StaffComplaintDetailPage() {
       <Box sx={{ maxWidth: 980, mx: 'auto' }}>
         <Skeleton variant="text" width={200} height={32} sx={{ mb: 3 }} />
         <Grid container spacing={2.5}>
-          <Grid item xs={12} md={8}>
+          <Grid xs={12} md={8}>
             <Card><CardContent><Skeleton variant="rectangular" height={300} /></CardContent></Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Card><CardContent><Skeleton variant="rectangular" height={200} /></CardContent></Card>
           </Grid>
         </Grid>
@@ -186,7 +186,7 @@ function StaffComplaintDetailPage() {
 
   if (!complaint) return null;
 
-  const catConfig = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.OTHER;
+  const catConfig = CATEGORY_CONFIG[complaint.category] || CATEGORY_CONFIG.GENERAL;
   const timeline  = buildTimeline(complaint);
   const actions   = getAvailableActions(complaint.status);
 
@@ -233,7 +233,7 @@ function StaffComplaintDetailPage() {
       <Grid container spacing={2.5}>
 
         {/* ── Left column ──────────────────────────────────────────────── */}
-        <Grid item xs={12} md={8}>
+        <Grid xs={12} md={8}>
 
           {/* Complaint details */}
           <Card sx={{ mb: 2.5 }}>
@@ -339,7 +339,7 @@ function StaffComplaintDetailPage() {
         </Grid>
 
         {/* ── Right column — actions + meta ─────────────────────────────── */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
 
           {/* Action card */}
           {actions.length > 0 && (
@@ -583,7 +583,7 @@ function StaffComplaintDetailPage() {
 function getCategoryEmoji(category) {
   const map = {
     GENERAL:'📋', ELECTRICAL:'⚡', PLUMBING:'🔧',
-    CARPENTRY:'🪚', CLEANING:'🧹', INTERNET:'🌐', OTHER:'📌',
+    CIVIL:'🪚', CLEANING:'🧹', NETWORK:'🌐', OTHER:'📌',
   };
   return map[category] || '📋';
 }

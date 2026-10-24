@@ -1,187 +1,172 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Grid,
-  Chip, Alert, Skeleton, TextField, MenuItem,
-  Divider, Button,
+  Alert, Box, Button, Card, CardContent, Chip, MenuItem,
+  Skeleton, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
-import {
-  PersonOutlined,
-  BuildOutlined,
-  SearchOutlined,
-} from '@mui/icons-material';
+import { SearchOutlined } from '@mui/icons-material';
 import PageHeader from '../../components/common/PageHeader';
 import EmptyState from '../../components/common/EmptyState';
-import staffApi   from '../../api/staffApi';
+import complaintApi from '../../api/complaintApi';
+import staffApi from '../../api/staffApi';
+import { formatDate } from '../../utils/formatters';
 
 const AVAIL_CONFIG = {
-  AVAILABLE: { label: 'Available', color: '#10B981', bg: '#D1FAE5' },
-  BUSY:      { label: 'Busy',      color: '#F59E0B', bg: '#FEF3C7' },
-  ON_LEAVE:  { label: 'On Leave',  color: '#94A3B8', bg: '#F1F5F9' },
-  INACTIVE:  { label: 'Inactive',  color: '#EF4444', bg: '#FEE2E2' },
+  AVAILABLE: { label: 'Available', color: '#047857', bg: '#D1FAE5' },
+  BUSY:      { label: 'Busy',      color: '#B45309', bg: '#FEF3C7' },
+  ON_LEAVE:  { label: 'On leave',  color: '#475569', bg: '#F1F5F9' },
+  INACTIVE:  { label: 'Inactive',  color: '#B91C1C', bg: '#FEE2E2' },
 };
 
 function WardenStaffPage() {
-  const [staffList,    setStaffList]    = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState('');
-  const [search,       setSearch]       = useState('');
-  const [availFilter,  setAvailFilter]  = useState('ALL');
+  const [staffList, setStaffList] = useState([]);
+  const [skillsByStaff, setSkillsByStaff] = useState({});
+  const [assignedCounts, setAssignedCounts] = useState({});
+  const [search, setSearch] = useState('');
+  const [availability, setAvailability] = useState('ALL');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const fetchStaff = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await staffApi.getAllStaff();
-      setStaffList(data);
-    } catch {
-      setError('Unable to load staff list. Please try again.');
+      const [staff, complaints] = await Promise.all([
+        staffApi.getAllStaff(),
+        complaintApi.getAllComplaints(),
+      ]);
+      const skillRows = await Promise.all(
+        staff.map(async member => [member.id, await staffApi.getStaffSkills(member.id)])
+      );
+      const counts = complaints.reduce((acc, complaint) => {
+        if (complaint.assigned_staff_id != null) {
+          acc[complaint.assigned_staff_id] = (acc[complaint.assigned_staff_id] || 0) + 1;
+        }
+        return acc;
+      }, {});
+      setStaffList(staff);
+      setSkillsByStaff(Object.fromEntries(skillRows));
+      setAssignedCounts(counts);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Unable to load staff information. Please try again.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchStaff(); }, [fetchStaff]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const filtered = staffList.filter(s => {
-    const matchAvail = availFilter === 'ALL' || s.availability_status === availFilter;
-    const q = search.toLowerCase();
-    const matchSearch = !search ||
-      s.employee_code?.toLowerCase().includes(q) ||
-      String(s.id).includes(q);
-    return matchAvail && matchSearch;
-  });
-
-  // Count by availability
-  const countByAvail = (key) =>
-    key === 'ALL' ? staffList.length : staffList.filter(s => s.availability_status === key).length;
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return staffList.filter(member => {
+      const skills = (skillsByStaff[member.id] || []).map(item => item.skill);
+      const matchesStatus = availability === 'ALL' || member.availability_status === availability;
+      const haystack = [member.name, member.email, member.employee_code, ...skills]
+        .filter(Boolean).join(' ').toLowerCase();
+      return matchesStatus && (!query || haystack.includes(query));
+    }).sort((a, b) => (a.name || a.employee_code).localeCompare(b.name || b.employee_code));
+  }, [availability, search, skillsByStaff, staffList]);
 
   return (
     <Box>
       <PageHeader
         title="Staff Management"
-        subtitle="View maintenance staff availability and skills."
+        subtitle="Review staff contact details, work skills, availability, and assigned workload."
+        action={<Button variant="outlined" onClick={fetchData}>Refresh</Button>}
       />
 
-      {/* Filter bar */}
       <Card sx={{ mb: 2.5 }}>
-        <CardContent sx={{ py: '16px !important' }}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-            <TextField
-              size="small"
-              placeholder="Search by employee code or ID…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              sx={{ minWidth: 220 }}
-              InputProps={{
-                startAdornment: (
-                  <Box sx={{ mr: 1, display: 'flex', color: 'text.disabled' }}>
-                    <SearchOutlined sx={{ fontSize: 18 }} />
-                  </Box>
-                ),
-              }}
-            />
-            <TextField
-              select size="small"
-              label="Availability"
-              value={availFilter}
-              onChange={e => setAvailFilter(e.target.value)}
-              sx={{ minWidth: 160 }}
-            >
-              <MenuItem value="ALL">All ({countByAvail('ALL')})</MenuItem>
-              {Object.entries(AVAIL_CONFIG).map(([k, v]) => (
-                <MenuItem key={k} value={k}>{v.label} ({countByAvail(k)})</MenuItem>
-              ))}
-            </TextField>
-          </Box>
+        <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <TextField
+            size="small"
+            label="Search staff"
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            sx={{ flex: '1 1 260px' }}
+            InputProps={{ startAdornment: <SearchOutlined sx={{ mr: 1, color: 'text.secondary' }} /> }}
+          />
+          <TextField
+            select
+            size="small"
+            label="Availability"
+            value={availability}
+            onChange={event => setAvailability(event.target.value)}
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="ALL">All statuses</MenuItem>
+            {Object.entries(AVAIL_CONFIG).map(([value, config]) => (
+              <MenuItem key={value} value={value}>{config.label}</MenuItem>
+            ))}
+          </TextField>
         </CardContent>
       </Card>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}
-          action={<Button size="small" color="inherit" onClick={fetchStaff}>Retry</Button>}>
+        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={fetchData}>Retry</Button>}>
           {error}
         </Alert>
       )}
 
-      {loading && (
-        <Grid container spacing={2}>
-          {[1,2,3,4,5,6].map(i => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Card><CardContent><Skeleton variant="rectangular" height={120} /></CardContent></Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      {!loading && !error && filtered.length === 0 && (
-        <Card>
-          <EmptyState
-            icon={<BuildOutlined sx={{ fontSize: 36 }} />}
-            title="No staff found"
-            description="Try adjusting your search or availability filter."
-          />
-        </Card>
-      )}
-
-      {!loading && !error && filtered.length > 0 && (
-        <Grid container spacing={2}>
-          {filtered.map(staff => {
-            const avail = AVAIL_CONFIG[staff.availability_status] || AVAIL_CONFIG.INACTIVE;
-            return (
-              <Grid item xs={12} sm={6} md={4} key={staff.id}>
-                <Card sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                      <Box
-                        sx={{
-                          width: 44, height: 44, borderRadius: '50%',
-                          bgcolor: '#EEF2FF',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <PersonOutlined sx={{ color: '#4F46E5', fontSize: 22 }} />
-                      </Box>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          Staff #{staff.id}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {staff.employee_code}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={avail.label}
-                        size="small"
-                        sx={{ bgcolor: avail.bg, color: avail.color, fontWeight: 600, fontSize: '0.6875rem' }}
-                      />
-                    </Box>
-
-                    <Divider sx={{ mb: 1.5 }} />
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        Staff ID
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                        #{staff.id}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        Joined
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                        {staff.joined_at ? new Date(staff.joined_at).getFullYear() : '—'}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      )}
+      <Card>
+        <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+          <Table stickyHeader size="small" aria-label="Staff members">
+            <TableHead>
+              <TableRow>
+                {['Staff ID', 'Name', 'Employee ID', 'Email', 'Phone', 'Specialization', 'Availability', 'Assigned work', 'Joined'].map(label => (
+                  <TableCell key={label} sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{label}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading && Array.from({ length: 4 }, (_, index) => (
+                <TableRow key={`loading-${index}`}>
+                  {Array.from({ length: 9 }, (_, cell) => (
+                    <TableCell key={cell}><Skeleton width={cell === 3 ? 150 : 72} /></TableCell>
+                  ))}
+                </TableRow>
+              ))}
+              {!loading && !error && filtered.map(member => {
+                const status = AVAIL_CONFIG[member.availability_status] || AVAIL_CONFIG.INACTIVE;
+                const skills = (skillsByStaff[member.id] || []).map(item => item.skill);
+                return (
+                  <TableRow hover key={member.id}>
+                    <TableCell>#{member.id}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, minWidth: 150 }}>{member.name || '—'}</TableCell>
+                    <TableCell>{member.employee_code || '—'}</TableCell>
+                    <TableCell>{member.email || '—'}</TableCell>
+                    <TableCell>{member.phone || '—'}</TableCell>
+                    <TableCell sx={{ minWidth: 180 }}>
+                      {skills.length ? skills.map(skill => (
+                        <Chip key={skill} label={skill.replaceAll('_', ' ')} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                      )) : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={status.label} size="small" sx={{ bgcolor: status.bg, color: status.color, fontWeight: 700 }} />
+                    </TableCell>
+                    <TableCell align="center">{assignedCounts[member.id] || 0}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(member.joined_at)}</TableCell>
+                  </TableRow>
+                );
+              })}
+              {!loading && !error && filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9}>
+                    <EmptyState
+                      title={staffList.length ? 'No staff match these filters' : 'No staff records yet'}
+                      description={staffList.length ? 'Try a different name, skill, or availability status.' : 'Staff records will appear here when they are added.'}
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Box sx={{ px: 2, py: 1.25, borderTop: 1, borderColor: 'divider' }}>
+          <Typography variant="caption" color="text.secondary">
+            Showing {loading ? '—' : filtered.length} of {staffList.length} staff members
+          </Typography>
+        </Box>
+      </Card>
     </Box>
   );
 }
